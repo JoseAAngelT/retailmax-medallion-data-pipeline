@@ -40,14 +40,15 @@ RETURN_REASONS = {
     "OTHER": "Otro motivo",
 }
 
+
 def _random_dates(size: int, start_date: str, end_date: str) -> list:
     """Genera una lista de fechas aleatorias en formato YYYY-MM-DD."""
     start = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
     delta_days = (end - start).days
-    
+
     return [
-        (start + timedelta(days=int(np.random.randint(0, delta_days)))).date() 
+        (start + timedelta(days=int(np.random.randint(0, delta_days)))).date()
         for _ in range(size)
     ]
 
@@ -87,9 +88,7 @@ def generate_articulos(n: int, proveedores: pd.DataFrame) -> pd.DataFrame:
             f"{category} - Subcategoria {np.random.randint(1, 6)}"
             for category in category_lvl1
         ],
-        "id_categ_n3": [
-            f"Linea {np.random.randint(1, 11)}" for _ in range(n)
-        ],
+        "id_categ_n3": [f"Linea {np.random.randint(1, 11)}" for _ in range(n)],
         "id_proveedor": np.random.choice(proveedores["id_proveedor"], n),
         "precio_lista": np.round(np.random.uniform(10, 5000, n), 2),
         "peso_kg": np.round(np.random.uniform(0.1, 20, n), 2),
@@ -112,19 +111,24 @@ def generate_tiendas(n: int) -> pd.DataFrame:
         "metros_cuadrados": np.random.randint(100, 10000, n),
         "activo": np.random.choice([True, False], n, p=[0.95, 0.05]),
         "fec_apertura": _random_dates(n, "2010-01-01", "2024-12-31"),
-        }
-    
+    }
+
     return pd.DataFrame(data)
 
 
-def generate_miembros(n: int, tiendas: pd.DataFrame,) -> pd.DataFrame:
+def generate_miembros(
+    n: int,
+    tiendas: pd.DataFrame,
+) -> pd.DataFrame:
     """Genera datos sintéticos para la tabla CRM_MIEMBROS."""
     data = {
         "id_miembro": range(1, n + 1),
         "fec_registro": _random_dates(n, "2020-01-01", "2025-05-31"),
         "id_ciudad": np.random.choice(tiendas["id_ciudad"], n),
         "genero": np.random.choice(GENDERS, n, p=[0.46, 0.46, 0.06, 0.02]),
-        "rango_edad": np.random.choice(AGE_GROUPS, n, p=[0.18, 0.25, 0.22, 0.18, 0.12, 0.05]),
+        "rango_edad": np.random.choice(
+            AGE_GROUPS, n, p=[0.18, 0.25, 0.22, 0.18, 0.12, 0.05]
+        ),
         "canal_pref": np.random.choice(SALES_CHANNELS, n),
         "activo": np.random.choice([True, False], n, p=[0.92, 0.08]),
         "fec_ultima_compra": _random_dates(n, "2024-01-01", "2025-06-15"),
@@ -133,7 +137,11 @@ def generate_miembros(n: int, tiendas: pd.DataFrame,) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def _generate_member_ids_for_sales(ventas_count: int, miembros: pd.DataFrame, anonymous_rate: float = 0.03,) -> list:
+def _generate_member_ids_for_sales(
+    ventas_count: int,
+    miembros: pd.DataFrame,
+    anonymous_rate: float = 0.03,
+) -> list:
     """Genera una lista de IDs de cliente para ventas, incluyendo un porcentaje de ventas anónimas."""
     member_ids = miembros["id_miembro"].to_numpy()
     selected_members = np.random.choice(member_ids, ventas_count).astype(object)
@@ -145,13 +153,18 @@ def _generate_member_ids_for_sales(ventas_count: int, miembros: pd.DataFrame, an
     return selected_members.tolist()
 
 
-def generate_ventas(n: int, miembros: pd.DataFrame, tiendas: pd.DataFrame, articulos: pd.DataFrame,) -> pd.DataFrame:
+def generate_ventas(
+    n: int,
+    miembros: pd.DataFrame,
+    tiendas: pd.DataFrame,
+    articulos: pd.DataFrame,
+) -> pd.DataFrame:
     """Genera datos sintéticos para la tabla TRANS_VENTAS."""
     qty = np.random.randint(1, 8, n)
     unit_price = np.round(np.random.uniform(10, 5000, n), 2)
     gross_amount = qty * unit_price
     discount = np.round(gross_amount * np.random.uniform(0, 0.25, n), 2)
-    
+
     data = {
         "id_trans": range(1, n + 1),
         "id_mimebro": _generate_member_ids_for_sales(n, miembros),
@@ -168,7 +181,12 @@ def generate_ventas(n: int, miembros: pd.DataFrame, tiendas: pd.DataFrame, artic
 
     return pd.DataFrame(data)
 
-def generate_stock(n: int, articulos: pd.DataFrame, tiendas: pd.DataFrame,) -> pd.DataFrame:
+
+def generate_stock(
+    n: int,
+    articulos: pd.DataFrame,
+    tiendas: pd.DataFrame,
+) -> pd.DataFrame:
     """Genera datos sintéticos para la tabla INV_STOCK_DIARIO."""
     stock_minimo = np.random.randint(5, 80, n)
     stock_maximo = stock_minimo + np.random.randint(50, 500, n)
@@ -182,15 +200,22 @@ def generate_stock(n: int, articulos: pd.DataFrame, tiendas: pd.DataFrame,) -> p
         "stock_transito": np.random.randint(0, 200, n),
         "stock_reservado": np.random.randint(0, 100, n),
         "stock_minimo_config": stock_minimo,
-        "stock_maximo_config": stock_maximo,                     
+        "stock_maximo_config": stock_maximo,
     }
 
     return pd.DataFrame(data)
 
 
-def generate_devoluciones(n: int, ventas: pd.DataFrame,) -> pd.DataFrame:
+def generate_devoluciones(
+    n: int,
+    ventas: pd.DataFrame,
+) -> pd.DataFrame:
     """Genera datos sinteticos para la tabla POST_DEVOLUCIONES."""
-    sampled_sales = ventas.sample(n=n, replace=True, random_state=SEED,).reset_index(drop=True)
+    sampled_sales = ventas.sample(
+        n=n,
+        replace=True,
+        random_state=SEED,
+    ).reset_index(drop=True)
 
     data = {
         "id_devolucion": range(1, n + 1),
@@ -201,7 +226,11 @@ def generate_devoluciones(n: int, ventas: pd.DataFrame,) -> pd.DataFrame:
         "qty_devuelta": np.random.randint(1, 3, n),
         "motivo_cod": np.random.choice(list(RETURN_REASONS.keys()), n),
         "canal_devolucion": np.random.choice(SALES_CHANNELS, n),
-        "estado_devolucion": np.random.choice(["approved", "rejected", "pending"], n, p=[0.75, 0.15, 0.10],),
+        "estado_devolucion": np.random.choice(
+            ["approved", "rejected", "pending"],
+            n,
+            p=[0.75, 0.15, 0.10],
+        ),
         "vr_reembolso": np.round(np.random.uniform(10, 3000, n), 2),
     }
 

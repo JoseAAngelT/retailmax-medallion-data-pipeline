@@ -15,9 +15,10 @@ def ensure_directories(config: dict) -> None:
         Path(config["paths"][layer]).mkdir(parents=True, exist_ok=True)
 
 
-def save_csv(df, path: str) -> None:
+def save_csv(df, path: str | Path) -> None:
     """Guarda un DataFrame como CSV sin índice."""
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False, encoding="utf-8")
 
 
