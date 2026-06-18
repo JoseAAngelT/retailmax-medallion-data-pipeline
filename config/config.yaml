@@ -1,0 +1,22 @@
+project:
+  name: "RetailMax Medallion Data Pipeline"
+  scenario: "Retail and E-commerce"
+
+paths:
+  bronze: "data/bronze"
+  silver: "data/silver"
+  gold: "data/gold"
+
+synthetic_data:
+  proveedores: 800
+  articulos: 5000
+  tiendas: 150
+  miembros: 50000
+  ventas: 1000000
+  stock: 750000
+  devoluciones: 50000
+
+business_rules:
+  stock_break_threshold_days: 7
+  rfm_window_days: 90
+  active_customer_window_days: 180

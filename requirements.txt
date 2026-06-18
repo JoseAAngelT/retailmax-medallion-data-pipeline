@@ -1,0 +1,6 @@
+pandas
+numpy
+faker
+pyarrow
+pyyaml
+azure-storage-blob
