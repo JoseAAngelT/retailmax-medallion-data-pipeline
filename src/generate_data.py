@@ -90,11 +90,11 @@ def generate_articulos(n: int, proveedores: pd.DataFrame) -> pd.DataFrame:
         "id_categ_n3": [
             f"Linea {np.random.randint(1, 11)}" for _ in range(n)
         ],
-        "id_proveedor": np.random.choise(proveedores["id_proveedor"], n),
+        "id_proveedor": np.random.choice(proveedores["id_proveedor"], n),
         "precio_lista": np.round(np.random.uniform(10, 5000, n), 2),
         "peso_kg": np.round(np.random.uniform(0.1, 20, n), 2),
-        "unidad_medida": np.random.choise([True, False], n, p=[0.97, 0.03]),
-        "activo": np.random.choise([True, False]. n, p=[0.097, 0.03]),
+        "unidad_medida": np.random.choice([True, False], n, p=[0.97, 0.03]),
+        "activo": np.random.choice([True, False], n, p=[0.97, 0.03]),
         "fec_alta": _random_dates(n, "2021-01-01", "2024-12-31"),
     }
 
@@ -106,11 +106,11 @@ def generate_tiendas(n: int) -> pd.DataFrame:
     data = {
         "id_tienda": range(1, n + 1),
         "nom_tienda": [f"RetailMax {fake.city()}" for _ in range(n)],
-        "tipo_tienda": np.random.choise(STORE_TYPES, n),
+        "tipo_tienda": np.random.choice(STORE_TYPES, n),
         "id_ciudad": [fake.city() for _ in range(n)],
-        "id_pais": np.random.choise(COUNTRIES, n),
+        "id_pais": np.random.choice(COUNTRIES, n),
         "metros_cuadrados": np.random.randint(100, 10000, n),
-        "activo": np.random.choise([True, False], n, p=[0.95, 0.05]),
+        "activo": np.random.choice([True, False], n, p=[0.95, 0.05]),
         "fec_apertura": _random_dates(n, "2010-01-01", "2024-12-31"),
         }
     
@@ -122,11 +122,11 @@ def generate_miembros(n: int, tiendas: pd.DataFrame,) -> pd.DataFrame:
     data = {
         "id_miembro": range(1, n + 1),
         "fec_registro": _random_dates(n, "2020-01-01", "2025-05-31"),
-        "id_ciudad": np.random.choise(tiendas["id_ciudad"], n),
-        "genero": np.random.choise(GENDERS, n, p=[0.46, 0.46, 0.6, 0.02]),
-        "rango_edad": np.random.choise(AGE_GROUPS, n, p=[0.18, 0.25, 0.22, 0.18, 0.12, 0.05]),
-        "canal_pref": np.random.choise(SALES_CHANNELS, n),
-        "activo": np.random_choise([True, False], n, p=[0.92, 0.08]),
+        "id_ciudad": np.random.choice(tiendas["id_ciudad"], n),
+        "genero": np.random.choice(GENDERS, n, p=[0.46, 0.46, 0.06, 0.02]),
+        "rango_edad": np.random.choice(AGE_GROUPS, n, p=[0.18, 0.25, 0.22, 0.18, 0.12, 0.05]),
+        "canal_pref": np.random.choice(SALES_CHANNELS, n),
+        "activo": np.random.choice([True, False], n, p=[0.92, 0.08]),
         "fec_ultima_compra": _random_dates(n, "2024-01-01", "2025-06-15"),
     }
 
@@ -155,8 +155,8 @@ def generate_ventas(n: int, miembros: pd.DataFrame, tiendas: pd.DataFrame, artic
     data = {
         "id_trans": range(1, n + 1),
         "id_mimebro": _generate_member_ids_for_sales(n, miembros),
-        "id_tienda": np.random.choise(tiendas["id_tienda"], n),
-        "art_id": np.random.choise(articulos["art_id"], n),
+        "id_tienda": np.random.choice(tiendas["id_tienda"], n),
+        "art_id": np.random.choice(articulos["art_id"], n),
         "fec_trans": _random_dates(n, "2025-01-01", "2025-06-15"),
         "hra_trans": _random_times(n),
         "qty_vendida": qty,
@@ -171,7 +171,7 @@ def generate_ventas(n: int, miembros: pd.DataFrame, tiendas: pd.DataFrame, artic
 def generate_stock(n: int, articulos: pd.DataFrame, tiendas: pd.DataFrame,) -> pd.DataFrame:
     """Genera datos sintéticos para la tabla INV_STOCK_DIARIO."""
     stock_minimo = np.random.randint(5, 80, n)
-    stock_maximo = np.stock_minimo + np.random.randint(50, 500, n)
+    stock_maximo = stock_minimo + np.random.randint(50, 500, n)
 
     data = {
         "id_snapshot": range(1, n + 1),

@@ -1,4 +1,4 @@
-from src.generate_data import generate_data
+from src.generate_data import generate_bronze_data
 from src.utils import load_config, ensure_directories
 
 
