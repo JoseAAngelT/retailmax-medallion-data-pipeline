@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pandas as pd
 import yaml
 
 
@@ -15,14 +16,15 @@ def ensure_directories(config: dict) -> None:
         Path(config["paths"][layer]).mkdir(parents=True, exist_ok=True)
 
 
-def save_csv(df, path: str | Path) -> None:
+def save_csv(df: pd.DataFrame, path: str | Path) -> None:
     """Guarda un DataFrame como CSV sin índice."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    file_path = Path(path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False, encoding="utf-8")
 
 
-def save_parquet(df, path: str) -> None:
+def save_parquet(df: pd.DataFrame, path: str | Path) -> None:
     """Guarda un DataFrame como Parquet sin índice."""
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    file_path = Path(path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(path, index=False)
