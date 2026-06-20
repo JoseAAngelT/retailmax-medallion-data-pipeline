@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 from typing import cast
 
@@ -28,6 +29,12 @@ def _read_silver_table(silver_path: Path, table_name: str) -> pd.DataFrame:
     """Lee una tabla Parquet desde la capa Silver."""
     file_path = silver_path / f"{table_name}.parquet"
     return pd.read_parquet(file_path)
+
+
+def _hash_value(value: object) -> str:
+    """Genera un hash SHA-256 estable para anonimizar identificadores."""
+    value_as_text = str(value)
+    return hashlib.sha3_256(value_as_text.encode("utf-8")).hexdigest()
 
 
 def _safe_qcut(series: pd.Series, ascending: bool = True) -> pd.Series:
@@ -142,7 +149,7 @@ def build_dim_clientes(miembros: pd.DataFrame) -> pd.DataFrame:
     """Constuye la dimension de clientes e incluye cliente anónimo."""
     dim_clientes = miembros.copy()
 
-    dim_clientes["id_miembro_hash"] = dim_clientes["id_miembro"].astype(str).apply(hash)
+    dim_clientes["id_miembro_hash"] = dim_clientes["id_miembro"].apply(_hash_value)
 
     selected_columns = [
         "id_miembro",
@@ -163,7 +170,7 @@ def build_dim_clientes(miembros: pd.DataFrame) -> pd.DataFrame:
         [
             {
                 "id_miembro": 0,
-                "id_miembro_hash": 0,
+                "id_miembro_hash": _hash_value(0),
                 "fec_registro": pd.NaT,
                 "id_ciudad": "No informado",
                 "genero": "No informado",
@@ -176,7 +183,14 @@ def build_dim_clientes(miembros: pd.DataFrame) -> pd.DataFrame:
         ]
     )
 
-    return pd.concat([anonymous_customer, dim_clientes], ignore_index=True)
+    dim_clientes = pd.concat(
+        [anonymous_customer, dim_clientes],
+        ignore_index=True,
+    )
+
+    dim_clientes["id_miembro_hash"] = dim_clientes["id_miembro_hash"].astype(str)
+
+    return dim_clientes
 
 
 def build_fact_ventas(
