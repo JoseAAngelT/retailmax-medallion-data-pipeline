@@ -92,7 +92,7 @@ def generate_articulos(n: int, proveedores: pd.DataFrame) -> pd.DataFrame:
         "id_proveedor": np.random.choice(proveedores["id_proveedor"], n),
         "precio_lista": np.round(np.random.uniform(10, 5000, n), 2),
         "peso_kg": np.round(np.random.uniform(0.1, 20, n), 2),
-        "unidad_medida": np.random.choice([True, False], n, p=[0.97, 0.03]),
+        "unid_medida": np.random.choice([True, False], n, p=[0.97, 0.03]),
         "activo": np.random.choice([True, False], n, p=[0.97, 0.03]),
         "fec_alta": _random_dates(n, "2021-01-01", "2024-12-31"),
     }

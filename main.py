@@ -1,4 +1,5 @@
 from src.generate_data import generate_bronze_data
+from src.gold_transform import run_gold_transformations
 from src.silver_transform import run_silver_transformations
 from src.utils import ensure_directories, load_config
 
@@ -15,6 +16,9 @@ def main() -> None:
 
     print("\nPaso 2: Transformando datos sintéticos hacia capa Silver...")
     run_silver_transformations(config)
+
+    print("\nPaso 3: Construyendo modelo dimensional en capa Gold...")
+    run_gold_transformations(config)
 
     print("\nPipeline completado exitosamente.")
 
