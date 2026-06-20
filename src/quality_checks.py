@@ -41,7 +41,7 @@ def _add_check(
     passed: bool,
     detail: str,
 ) -> None:
-    """Agrega el resultado de una validación a la lista de resultados."""
+    """Agrega el resultado de una validación."""
     status = "PASS" if passed else "FAIL"
 
     results.append(
@@ -68,16 +68,19 @@ def _validate_bronze_files(
         file_exists = file_path.exists()
 
         _add_check(
-            results, f"Bronze file exists - {table_name}", file_exists, str(file_path)
+            results,
+            f"Existe archivo Bronze - {table_name}",
+            file_exists,
+            str(file_path),
         )
 
         if file_exists:
             row_count = len(pd.read_csv(file_path))
             _add_check(
                 results,
-                f"Bronze minimum rows - {table_name}",
+                f"Volumen mínimo Bronze - {table_name}",
                 row_count >= minimum_rows,
-                f"rows={row_count:,}, minimum={minimum_rows:,}",
+                f"registros={row_count:,}, mínimo={minimum_rows:,}",
             )
 
 
@@ -91,7 +94,7 @@ def _validate_silver_files(
 
         _add_check(
             results,
-            f"Silver file exists - {table_name}",
+            f"Existe archivo Silver - {table_name}",
             file_path.exists(),
             str(file_path),
         )
@@ -107,7 +110,7 @@ def _validate_gold_files(
 
         _add_check(
             results,
-            f"Gold file exists - {table_name}",
+            f"Existe archivo Gold - {table_name}",
             file_path.exists(),
             str(file_path),
         )
@@ -117,7 +120,7 @@ def _validate_gold_row_counts(
     gold_tables: dict[str, pd.DataFrame],
     results: list[dict[str, str]],
 ) -> None:
-    """Valida conteos principales de la capa Gold."""
+    """Valida conteos esperados de las tablas principales de Gold."""
     expected_counts = {
         "dim_productos": 5000,
         "dim_tiendas": 150,
@@ -132,9 +135,9 @@ def _validate_gold_row_counts(
 
         _add_check(
             results,
-            f"Gold row count - {table_name}",
+            f"Conteo Gold - {table_name}",
             row_count == expected_rows,
-            f"rows={row_count:,}, expected={expected_rows:,}",
+            f"registros={row_count:,}, esperado={expected_rows:,}",
         )
 
 
@@ -157,37 +160,37 @@ def _validate_referential_integrity(
 
     _add_check(
         results,
-        "Referential integrity - fact_ventas.id_miembro",
+        "Integridad referencial - fact_ventas.id_miembro",
         fact_ventas["id_miembro"].isin(valid_customers).all(),
-        "All sales customers exist in dim_clientes.",
+        "Todos los clientes de fact_ventas existen en dim_clientes.",
     )
 
     _add_check(
         results,
-        "Referential integrity - fact_ventas.art_id",
+        "Integridad referencial - fact_ventas.art_id",
         fact_ventas["art_id"].isin(valid_products).all(),
-        "All sales products exist in dim_productos.",
+        "Todos los productos de fact_ventas existen en dim_productos.",
     )
 
     _add_check(
         results,
-        "Referential integrity - fact_ventas.id_tienda",
+        "Integridad referencial - fact_ventas.id_tienda",
         fact_ventas["id_tienda"].isin(valid_stores).all(),
-        "All sales stores exist in dim_tiendas.",
+        "Todas las tiendas de fact_ventas existen en dim_tiendas.",
     )
 
     _add_check(
         results,
-        "Referential integrity - fact_inventario_art_id",
+        "Integridad referencial - fact_inventario.art_id",
         fact_inventario["art_id"].isin(valid_products).all(),
-        "All inventory products exist in dim_productos",
+        "Todos los productos de fact_inventario existen en dim_productos.",
     )
 
     _add_check(
         results,
-        "Referential integrity - fact_devoluciones.id_trans_origen",
+        "Integridad referencial - fact_devoluciones.id_trans_origen",
         fact_devoluciones["id_trans_origen"].isin(valid_transactions).all(),
-        "All returns reference an existing sale transaction.",
+        "Todas las devoluciones referencian una venta existente.",
     )
 
 
@@ -204,23 +207,23 @@ def _validate_business_rules(
 
     _add_check(
         results,
-        "Anonymous customer exists",
+        "Existe cliente anónimo",
         0 in set(dim_clientes["id_miembro"]),
-        "dim_clientes contains id_miembro=0.",
+        "dim_clientes contiene el registro id_miembro=0.",
     )
 
     _add_check(
         results,
-        "Sales net values is non-negative",
+        "Venta neta no negativa",
         (fact_ventas["vr_venta_neto"] >= 0).all(),
-        "All vr_venta_neto values are greater than or equal to zero.",
+        "Todos los valores de vr_venta_neto son mayores o iguales a cero.",
     )
 
     _add_check(
         results,
-        "Inventory coverage is available",
+        "Cobertura de inventario disponible",
         fact_inventario["cobertura_dias"].notna().all(),
-        "All inventory records have cobertura_dias.",
+        "Todos los registros de inventario tienen cobertura_dias.",
     )
 
     stock_alert_condition = pd.Series(
@@ -233,20 +236,20 @@ def _validate_business_rules(
         )
     )
 
-    stock_alert_condition_is_valid = bool((stock_alert_condition > 0).all())
+    stock_alert_condition_is_valid = bool(stock_alert_condition.gt(0).all())
 
     _add_check(
         results,
-        "Stock alert requires positive 14-day consumption",
-        (stock_alert_condition_is_valid > 0),
-        "All alerta_quiebre records have promedio_consumo_14dias > 0.",
+        "Alerta de quiebre requiere consumo positivo",
+        stock_alert_condition_is_valid,
+        "Todos los registros con alerta_quiebre tienen consumo 14 días > 0.",
     )
 
     _add_check(
         results,
-        "Return rate is non-negative",
+        "Tasa de devolución no negativa",
         (fact_devoluciones["tasa_devolucion_articulo"] >= 0).all(),
-        "All tasa_devolucion_articulo values are greater than or equal to zero.",
+        "Todos los valores de tasa_devolucion_articulo son >= 0.",
     )
 
     rfm_scores_are_valid = (
@@ -257,13 +260,16 @@ def _validate_business_rules(
 
     _add_check(
         results,
-        "RFM scores are between 1 and 5",
+        "Scores RFM entre 1 y 5",
         rfm_scores_are_valid,
-        "r_score, f_score and m_score must be in range 1-5.",
+        "r_score, f_score y m_score están dentro del rango esperado.",
     )
 
 
-def _write_quality_summary(results: list[dict[str, str]], output_path: Path) -> None:
+def _write_quality_summary(
+    results: list[dict[str, str]],
+    output_path: Path,
+) -> None:
     """Escribe un resumen de validaciones en formato TXT."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -272,13 +278,13 @@ def _write_quality_summary(results: list[dict[str, str]], output_path: Path) -> 
     passed_checks = total_checks - len(failed_checks)
 
     lines = [
-        "RetailMax Medallion Data Pipeline - Quality Checks Summary",
+        "RetailMax Medallion Data Pipeline - Resumen de calidad",
         "=" * 65,
-        f"Total checks: {total_checks}",
-        f"Passed checks: {passed_checks}",
-        f"Failed checks: {len(failed_checks)}",
+        f"Total de validaciones: {total_checks}",
+        f"Validaciones exitosas: {passed_checks}",
+        f"Validaciones fallidas: {len(failed_checks)}",
         "",
-        "Detailed results:",
+        "Detalle de validaciones:",
         "-" * 65,
     ]
 

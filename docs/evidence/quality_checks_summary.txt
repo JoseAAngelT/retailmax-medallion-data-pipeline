@@ -1,55 +1,55 @@
-RetailMax Medallion Data Pipeline - Quality Checks Summary
+RetailMax Medallion Data Pipeline - Resumen de calidad
 =================================================================
-Total checks: 47
-Passed checks: 47
-Failed checks: 0
+Total de validaciones: 47
+Validaciones exitosas: 47
+Validaciones fallidas: 0
 
-Detailed results:
+Detalle de validaciones:
 -----------------------------------------------------------------
-[PASS] Bronze file exists - MSTR_PROVEEDORES - data\bronze\MSTR_PROVEEDORES.csv
-[PASS] Bronze minimum rows - MSTR_PROVEEDORES - rows=800, minimum=800
-[PASS] Bronze file exists - MSTR_ARTICULOS - data\bronze\MSTR_ARTICULOS.csv
-[PASS] Bronze minimum rows - MSTR_ARTICULOS - rows=5,000, minimum=5,000
-[PASS] Bronze file exists - MSTR_TIENDAS - data\bronze\MSTR_TIENDAS.csv
-[PASS] Bronze minimum rows - MSTR_TIENDAS - rows=150, minimum=150
-[PASS] Bronze file exists - CRM_MIEMBROS - data\bronze\CRM_MIEMBROS.csv
-[PASS] Bronze minimum rows - CRM_MIEMBROS - rows=50,000, minimum=50,000
-[PASS] Bronze file exists - TRANS_VENTAS - data\bronze\TRANS_VENTAS.csv
-[PASS] Bronze minimum rows - TRANS_VENTAS - rows=1,000,000, minimum=1,000,000
-[PASS] Bronze file exists - INV_STOCK_DIARIO - data\bronze\INV_STOCK_DIARIO.csv
-[PASS] Bronze minimum rows - INV_STOCK_DIARIO - rows=750,000, minimum=750,000
-[PASS] Bronze file exists - POST_DEVOLUCIONES - data\bronze\POST_DEVOLUCIONES.csv
-[PASS] Bronze minimum rows - POST_DEVOLUCIONES - rows=50,000, minimum=50,000
-[PASS] Silver file exists - MSTR_PROVEEDORES - data\silver\MSTR_PROVEEDORES.parquet
-[PASS] Silver file exists - MSTR_ARTICULOS - data\silver\MSTR_ARTICULOS.parquet
-[PASS] Silver file exists - MSTR_TIENDAS - data\silver\MSTR_TIENDAS.parquet
-[PASS] Silver file exists - CRM_MIEMBROS - data\silver\CRM_MIEMBROS.parquet
-[PASS] Silver file exists - TRANS_VENTAS - data\silver\TRANS_VENTAS.parquet
-[PASS] Silver file exists - INV_STOCK_DIARIO - data\silver\INV_STOCK_DIARIO.parquet
-[PASS] Silver file exists - POST_DEVOLUCIONES - data\silver\POST_DEVOLUCIONES.parquet
-[PASS] Gold file exists - dim_productos - data\gold\dim_productos.parquet
-[PASS] Gold file exists - dim_tiendas - data\gold\dim_tiendas.parquet
-[PASS] Gold file exists - dim_clientes - data\gold\dim_clientes.parquet
-[PASS] Gold file exists - fact_ventas - data\gold\fact_ventas.parquet
-[PASS] Gold file exists - fact_inventario - data\gold\fact_inventario.parquet
-[PASS] Gold file exists - fact_devoluciones - data\gold\fact_devoluciones.parquet
-[PASS] Gold file exists - fact_rfm_clientes - data\gold\fact_rfm_clientes.parquet
-[PASS] Gold file exists - kpi_ventas_diarias - data\gold\kpi_ventas_diarias.parquet
-[PASS] Gold file exists - kpi_top_articulos_categoria - data\gold\kpi_top_articulos_categoria.parquet
-[PASS] Gold row count - dim_productos - rows=5,000, expected=5,000
-[PASS] Gold row count - dim_tiendas - rows=150, expected=150
-[PASS] Gold row count - dim_clientes - rows=50,001, expected=50,001
-[PASS] Gold row count - fact_ventas - rows=1,000,000, expected=1,000,000
-[PASS] Gold row count - fact_inventario - rows=750,000, expected=750,000
-[PASS] Gold row count - fact_devoluciones - rows=50,000, expected=50,000
-[PASS] Referential integrity - fact_ventas.id_miembro - All sales customers exist in dim_clientes.
-[PASS] Referential integrity - fact_ventas.art_id - All sales products exist in dim_productos.
-[PASS] Referential integrity - fact_ventas.id_tienda - All sales stores exist in dim_tiendas.
-[PASS] Referential integrity - fact_inventario_art_id - All inventory products exist in dim_productos
-[PASS] Referential integrity - fact_devoluciones.id_trans_origen - All returns reference an existing sale transaction.
-[PASS] Anonymous customer exists - dim_clientes contains id_miembro=0.
-[PASS] Sales net values is non-negative - All vr_venta_neto values are greater than or equal to zero.
-[PASS] Inventory coverage is available - All inventory records have cobertura_dias.
-[PASS] Stock alert requires positive 14-day consumption - All alerta_quiebre records have promedio_consumo_14dias > 0.
-[PASS] Return rate is non-negative - All tasa_devolucion_articulo values are greater than or equal to zero.
-[PASS] RFM scores are between 1 and 5 - r_score, f_score and m_score must be in range 1-5.
+[PASS] Existe archivo Bronze - MSTR_PROVEEDORES - data\bronze\MSTR_PROVEEDORES.csv
+[PASS] Volumen mínimo Bronze - MSTR_PROVEEDORES - registros=800, mínimo=800
+[PASS] Existe archivo Bronze - MSTR_ARTICULOS - data\bronze\MSTR_ARTICULOS.csv
+[PASS] Volumen mínimo Bronze - MSTR_ARTICULOS - registros=5,000, mínimo=5,000
+[PASS] Existe archivo Bronze - MSTR_TIENDAS - data\bronze\MSTR_TIENDAS.csv
+[PASS] Volumen mínimo Bronze - MSTR_TIENDAS - registros=150, mínimo=150
+[PASS] Existe archivo Bronze - CRM_MIEMBROS - data\bronze\CRM_MIEMBROS.csv
+[PASS] Volumen mínimo Bronze - CRM_MIEMBROS - registros=50,000, mínimo=50,000
+[PASS] Existe archivo Bronze - TRANS_VENTAS - data\bronze\TRANS_VENTAS.csv
+[PASS] Volumen mínimo Bronze - TRANS_VENTAS - registros=1,000,000, mínimo=1,000,000
+[PASS] Existe archivo Bronze - INV_STOCK_DIARIO - data\bronze\INV_STOCK_DIARIO.csv
+[PASS] Volumen mínimo Bronze - INV_STOCK_DIARIO - registros=750,000, mínimo=750,000
+[PASS] Existe archivo Bronze - POST_DEVOLUCIONES - data\bronze\POST_DEVOLUCIONES.csv
+[PASS] Volumen mínimo Bronze - POST_DEVOLUCIONES - registros=50,000, mínimo=50,000
+[PASS] Existe archivo Silver - MSTR_PROVEEDORES - data\silver\MSTR_PROVEEDORES.parquet
+[PASS] Existe archivo Silver - MSTR_ARTICULOS - data\silver\MSTR_ARTICULOS.parquet
+[PASS] Existe archivo Silver - MSTR_TIENDAS - data\silver\MSTR_TIENDAS.parquet
+[PASS] Existe archivo Silver - CRM_MIEMBROS - data\silver\CRM_MIEMBROS.parquet
+[PASS] Existe archivo Silver - TRANS_VENTAS - data\silver\TRANS_VENTAS.parquet
+[PASS] Existe archivo Silver - INV_STOCK_DIARIO - data\silver\INV_STOCK_DIARIO.parquet
+[PASS] Existe archivo Silver - POST_DEVOLUCIONES - data\silver\POST_DEVOLUCIONES.parquet
+[PASS] Existe archivo Gold - dim_productos - data\gold\dim_productos.parquet
+[PASS] Existe archivo Gold - dim_tiendas - data\gold\dim_tiendas.parquet
+[PASS] Existe archivo Gold - dim_clientes - data\gold\dim_clientes.parquet
+[PASS] Existe archivo Gold - fact_ventas - data\gold\fact_ventas.parquet
+[PASS] Existe archivo Gold - fact_inventario - data\gold\fact_inventario.parquet
+[PASS] Existe archivo Gold - fact_devoluciones - data\gold\fact_devoluciones.parquet
+[PASS] Existe archivo Gold - fact_rfm_clientes - data\gold\fact_rfm_clientes.parquet
+[PASS] Existe archivo Gold - kpi_ventas_diarias - data\gold\kpi_ventas_diarias.parquet
+[PASS] Existe archivo Gold - kpi_top_articulos_categoria - data\gold\kpi_top_articulos_categoria.parquet
+[PASS] Conteo Gold - dim_productos - registros=5,000, esperado=5,000
+[PASS] Conteo Gold - dim_tiendas - registros=150, esperado=150
+[PASS] Conteo Gold - dim_clientes - registros=50,001, esperado=50,001
+[PASS] Conteo Gold - fact_ventas - registros=1,000,000, esperado=1,000,000
+[PASS] Conteo Gold - fact_inventario - registros=750,000, esperado=750,000
+[PASS] Conteo Gold - fact_devoluciones - registros=50,000, esperado=50,000
+[PASS] Integridad referencial - fact_ventas.id_miembro - Todos los clientes de fact_ventas existen en dim_clientes.
+[PASS] Integridad referencial - fact_ventas.art_id - Todos los productos de fact_ventas existen en dim_productos.
+[PASS] Integridad referencial - fact_ventas.id_tienda - Todas las tiendas de fact_ventas existen en dim_tiendas.
+[PASS] Integridad referencial - fact_inventario.art_id - Todos los productos de fact_inventario existen en dim_productos.
+[PASS] Integridad referencial - fact_devoluciones.id_trans_origen - Todas las devoluciones referencian una venta existente.
+[PASS] Existe cliente anónimo - dim_clientes contiene el registro id_miembro=0.
+[PASS] Venta neta no negativa - Todos los valores de vr_venta_neto son mayores o iguales a cero.
+[PASS] Cobertura de inventario disponible - Todos los registros de inventario tienen cobertura_dias.
+[PASS] Alerta de quiebre requiere consumo positivo - Todos los registros con alerta_quiebre tienen consumo 14 días > 0.
+[PASS] Tasa de devolución no negativa - Todos los valores de tasa_devolucion_articulo son >= 0.
+[PASS] Scores RFM entre 1 y 5 - r_score, f_score y m_score están dentro del rango esperado.
