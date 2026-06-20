@@ -9,9 +9,8 @@ RETURN_REASONS = {
     "DAMAGED": "Producto dañado",
     "WRONG_ITEM": "Producto incorrecto",
     "LATE_DELIVERY": "Entrega tardía",
-    "NO_LONGER_NEEDED": "Arrepentimiento del cliente",
+    "CUSTOMER_REGRET": "Arrepentimiento del cliente",
     "QUALITY_ISSUE": "Problema de calidad",
-    "OTHER": "Otro motivo",
 }
 
 
@@ -37,6 +36,7 @@ def _convert_date_columns(
     df: pd.DataFrame,
     date_columns: list[str],
 ) -> pd.DataFrame:
+    """Convierte columnas de fecha a tipo datetime."""
     for column in date_columns:
         df[column] = pd.to_datetime(df[column], errors="coerce")
 
@@ -48,7 +48,7 @@ def _to_numeric_series(
     column: str,
     fill_value: float = 0,
 ) -> pd.Series:
-    """Convierte una columna a númerica y remplaza nulos."""
+    """Convierte una columna a numérica y reemplaza valores nulos."""
     numeric_values = pd.Series(
         pd.to_numeric(df[column], errors="coerce"),
         index=df.index,
@@ -58,13 +58,13 @@ def _to_numeric_series(
 
 
 def _age_range_to_midpoint(age_range: object) -> float:
-    """Convierte un rango de edad a un valor numérico representativo"""
+    """Convierte un rango de edad a un valor numérico representativo."""
     mapping: dict[str, float] = {
         "18-25": 21.5,
         "26-35": 30.5,
         "36-45": 40.5,
         "46-60": 53.0,
-        "60+": 65.0,
+        "+60": 65.0,
     }
 
     if not isinstance(age_range, str):
@@ -73,7 +73,7 @@ def _age_range_to_midpoint(age_range: object) -> float:
     return mapping.get(age_range, float("nan"))
 
 
-def _midpoint_to_age_range(value: float) -> str:
+def _midpoint_to_age_range(value: object) -> str:
     """Convierte una edad aproximada al rango de edad correspondiente."""
     if pd.isna(value):
         return "No informado"
@@ -89,7 +89,7 @@ def _midpoint_to_age_range(value: float) -> str:
     if numeric_value <= 60:
         return "46-60"
 
-    return "60+"
+    return "+60"
 
 
 def transform_proveedores(df: pd.DataFrame) -> pd.DataFrame:
@@ -120,7 +120,7 @@ def transform_articulos(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def transform_tiendas(df: pd.DataFrame) -> pd.DataFrame:
-    """Limpia y estandariza la tabla MSTR_TIENDAS."""
+    """Limpia, estandariza y enriquece la tabla MSTR_TIENDAS."""
     df = _standardize_text_columns(df)
     df = _convert_date_columns(df, ["fec_apertura"])
 
@@ -132,18 +132,18 @@ def transform_tiendas(df: pd.DataFrame) -> pd.DataFrame:
     }
 
     distribution_zone_map = {
-        "Colombia": "Bogotá",
-        "México": "CDMX",
-        "Chile": "Santiago",
-        "Peru": "Lima",
-        "Ecuador": "Quito",
+        "Colombia": "Bogotá DC",
+        "Mexico": "CDMX DC",
+        "Chile": "Santiago DC",
+        "Peru": "Andina DC",
+        "Ecuador": "Andina DC",
     }
 
     df["tipo_tienda"] = df["tipo_tienda"].map(store_type_map)
     df["tipo_tienda"] = df["tipo_tienda"].fillna("No clasificado")
     df["id_pais"] = df["id_pais"].str.title()
 
-    # Transformación clave: zona de distribución asignada.
+    # Regla solicitada: enriquecer tiendas con zona de distribución asignada.
     df["zona_distribucion_asignada"] = df["id_pais"].map(distribution_zone_map)
     df["zona_distribucion_asignada"] = df["zona_distribucion_asignada"].fillna(
         "Zona no clasificada"
@@ -155,11 +155,11 @@ def transform_tiendas(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def transform_miembros(df: pd.DataFrame) -> pd.DataFrame:
-    """Limpia y estandariza la tabla CRM _MIEMBROS."""
+    """Limpia, estandariza y enriquece la tabla CRM_MIEMBROS."""
     df = _standardize_text_columns(df)
     df = _convert_date_columns(df, ["fec_registro", "fec_ultima_compra"])
 
-    # Transformación clave: estandarizar género a M, F o No informado.
+    # Regla solicitada: estandarizar género a M, F o No informado.
     df["genero"] = df["genero"].fillna("No informado")
     df["genero"] = df["genero"].replace(
         {
@@ -174,7 +174,7 @@ def transform_miembros(df: pd.DataFrame) -> pd.DataFrame:
         "No informado",
     )
 
-    # Transformación clave: se imputa rango_edad nulo usando el valor más frecuente por canal.
+    # Regla solicitada: imputar rango_edad nulo con la mediana del canal.
     rango_edad_num = pd.Series(
         df["rango_edad"].apply(_age_range_to_midpoint),
         index=df.index,
@@ -188,7 +188,7 @@ def transform_miembros(df: pd.DataFrame) -> pd.DataFrame:
 
     df["rango_edad"] = rango_edad_num.apply(_midpoint_to_age_range)
 
-    # Transformación clave: Calcular antiguedad en dias desde fec_registro.
+    # Regla solicitada: calcular antigüedad en días desde fec_registro.
     reference_date = df["fec_ultima_compra"].max()
     df["antiguedad_dias"] = (reference_date - df["fec_registro"]).dt.days.clip(lower=0)
 
@@ -201,7 +201,7 @@ def transform_ventas(
     df: pd.DataFrame,
     miembros: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Limpia y valida la tabla TRANS_VENTAS."""
+    """Limpia, valida y enriquece la tabla TRANS_VENTAS."""
     df = _standardize_text_columns(df)
     df = _convert_date_columns(df, ["fec_trans"])
 
@@ -216,7 +216,7 @@ def transform_ventas(
 
     valid_members = set(miembros["id_miembro"].dropna().astype(int))
 
-    # Transformación clave: validar id_miembro contra dim_clientes o asignar cliente anonimo.
+    # Regla solicitada: validar id_miembro o asignar cliente anónimo.
     df["id_miembro"] = _to_numeric_series(df, "id_miembro")
     df["id_miembro"] = np.where(
         df["id_miembro"].isin(valid_members),
@@ -225,6 +225,7 @@ def transform_ventas(
     )
     df["id_miembro"] = df["id_miembro"].astype(int)
 
+    # Regla solicitada: calcular venta neta e indicador de descuento.
     df["venta_bruta"] = df["qty_vendida"] * df["precio_unitario_venta"]
     df["vr_venta_neto"] = df["venta_bruta"] - df["descuento_aplicado"]
     df["vr_venta_neto"] = df["vr_venta_neto"].clip(lower=0)
@@ -257,6 +258,7 @@ def transform_devoluciones(df: pd.DataFrame) -> pd.DataFrame:
     df = _standardize_text_columns(df)
     df = _convert_date_columns(df, ["fec_devolucion"])
 
+    # Regla solicitada: estandarizar motivo_cod a descripción legible.
     df["motivo_desc"] = df["motivo_cod"].map(RETURN_REASONS)
     df["motivo_desc"] = df["motivo_desc"].fillna("Motivo no clasificado")
 
@@ -273,7 +275,7 @@ def transform_devoluciones(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def run_silver_transformations(config: dict) -> None:
-    """Ejecuta las transformaciones de Bronze hacia Silver"""
+    """Ejecuta las transformaciones de Bronze hacia Silver."""
     bronze_path = Path(config["paths"]["bronze"])
     silver_path = Path(config["paths"]["silver"])
 
