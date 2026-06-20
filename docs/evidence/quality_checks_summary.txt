@@ -1,0 +1,55 @@
+RetailMax Medallion Data Pipeline - Quality Checks Summary
+=================================================================
+Total checks: 47
+Passed checks: 47
+Failed checks: 0
+
+Detailed results:
+-----------------------------------------------------------------
+[PASS] Bronze file exists - MSTR_PROVEEDORES - data\bronze\MSTR_PROVEEDORES.csv
+[PASS] Bronze minimum rows - MSTR_PROVEEDORES - rows=800, minimum=800
+[PASS] Bronze file exists - MSTR_ARTICULOS - data\bronze\MSTR_ARTICULOS.csv
+[PASS] Bronze minimum rows - MSTR_ARTICULOS - rows=5,000, minimum=5,000
+[PASS] Bronze file exists - MSTR_TIENDAS - data\bronze\MSTR_TIENDAS.csv
+[PASS] Bronze minimum rows - MSTR_TIENDAS - rows=150, minimum=150
+[PASS] Bronze file exists - CRM_MIEMBROS - data\bronze\CRM_MIEMBROS.csv
+[PASS] Bronze minimum rows - CRM_MIEMBROS - rows=50,000, minimum=50,000
+[PASS] Bronze file exists - TRANS_VENTAS - data\bronze\TRANS_VENTAS.csv
+[PASS] Bronze minimum rows - TRANS_VENTAS - rows=1,000,000, minimum=1,000,000
+[PASS] Bronze file exists - INV_STOCK_DIARIO - data\bronze\INV_STOCK_DIARIO.csv
+[PASS] Bronze minimum rows - INV_STOCK_DIARIO - rows=750,000, minimum=750,000
+[PASS] Bronze file exists - POST_DEVOLUCIONES - data\bronze\POST_DEVOLUCIONES.csv
+[PASS] Bronze minimum rows - POST_DEVOLUCIONES - rows=50,000, minimum=50,000
+[PASS] Silver file exists - MSTR_PROVEEDORES - data\silver\MSTR_PROVEEDORES.parquet
+[PASS] Silver file exists - MSTR_ARTICULOS - data\silver\MSTR_ARTICULOS.parquet
+[PASS] Silver file exists - MSTR_TIENDAS - data\silver\MSTR_TIENDAS.parquet
+[PASS] Silver file exists - CRM_MIEMBROS - data\silver\CRM_MIEMBROS.parquet
+[PASS] Silver file exists - TRANS_VENTAS - data\silver\TRANS_VENTAS.parquet
+[PASS] Silver file exists - INV_STOCK_DIARIO - data\silver\INV_STOCK_DIARIO.parquet
+[PASS] Silver file exists - POST_DEVOLUCIONES - data\silver\POST_DEVOLUCIONES.parquet
+[PASS] Gold file exists - dim_productos - data\gold\dim_productos.parquet
+[PASS] Gold file exists - dim_tiendas - data\gold\dim_tiendas.parquet
+[PASS] Gold file exists - dim_clientes - data\gold\dim_clientes.parquet
+[PASS] Gold file exists - fact_ventas - data\gold\fact_ventas.parquet
+[PASS] Gold file exists - fact_inventario - data\gold\fact_inventario.parquet
+[PASS] Gold file exists - fact_devoluciones - data\gold\fact_devoluciones.parquet
+[PASS] Gold file exists - fact_rfm_clientes - data\gold\fact_rfm_clientes.parquet
+[PASS] Gold file exists - kpi_ventas_diarias - data\gold\kpi_ventas_diarias.parquet
+[PASS] Gold file exists - kpi_top_articulos_categoria - data\gold\kpi_top_articulos_categoria.parquet
+[PASS] Gold row count - dim_productos - rows=5,000, expected=5,000
+[PASS] Gold row count - dim_tiendas - rows=150, expected=150
+[PASS] Gold row count - dim_clientes - rows=50,001, expected=50,001
+[PASS] Gold row count - fact_ventas - rows=1,000,000, expected=1,000,000
+[PASS] Gold row count - fact_inventario - rows=750,000, expected=750,000
+[PASS] Gold row count - fact_devoluciones - rows=50,000, expected=50,000
+[PASS] Referential integrity - fact_ventas.id_miembro - All sales customers exist in dim_clientes.
+[PASS] Referential integrity - fact_ventas.art_id - All sales products exist in dim_productos.
+[PASS] Referential integrity - fact_ventas.id_tienda - All sales stores exist in dim_tiendas.
+[PASS] Referential integrity - fact_inventario_art_id - All inventory products exist in dim_productos
+[PASS] Referential integrity - fact_devoluciones.id_trans_origen - All returns reference an existing sale transaction.
+[PASS] Anonymous customer exists - dim_clientes contains id_miembro=0.
+[PASS] Sales net values is non-negative - All vr_venta_neto values are greater than or equal to zero.
+[PASS] Inventory coverage is available - All inventory records have cobertura_dias.
+[PASS] Stock alert requires positive 14-day consumption - All alerta_quiebre records have promedio_consumo_14dias > 0.
+[PASS] Return rate is non-negative - All tasa_devolucion_articulo values are greater than or equal to zero.
+[PASS] RFM scores are between 1 and 5 - r_score, f_score and m_score must be in range 1-5.

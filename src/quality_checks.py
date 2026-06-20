@@ -1,0 +1,329 @@
+from pathlib import Path
+
+import pandas as pd
+
+BRONZE_TABLES = {
+    "MSTR_PROVEEDORES": 800,
+    "MSTR_ARTICULOS": 5000,
+    "MSTR_TIENDAS": 150,
+    "CRM_MIEMBROS": 50000,
+    "TRANS_VENTAS": 1000000,
+    "INV_STOCK_DIARIO": 750000,
+    "POST_DEVOLUCIONES": 50000,
+}
+
+SILVER_TABLES = [
+    "MSTR_PROVEEDORES",
+    "MSTR_ARTICULOS",
+    "MSTR_TIENDAS",
+    "CRM_MIEMBROS",
+    "TRANS_VENTAS",
+    "INV_STOCK_DIARIO",
+    "POST_DEVOLUCIONES",
+]
+
+GOLD_TABLES = [
+    "dim_productos",
+    "dim_tiendas",
+    "dim_clientes",
+    "fact_ventas",
+    "fact_inventario",
+    "fact_devoluciones",
+    "fact_rfm_clientes",
+    "kpi_ventas_diarias",
+    "kpi_top_articulos_categoria",
+]
+
+
+def _add_check(
+    results: list[dict[str, str]],
+    check_name: str,
+    passed: bool,
+    detail: str,
+) -> None:
+    """Agrega el resultado de una validación a la lista de resultados."""
+    status = "PASS" if passed else "FAIL"
+
+    results.append(
+        {
+            "check_name": check_name,
+            "status": status,
+            "detail": detail,
+        }
+    )
+
+
+def _read_gold_table(gold_path: Path, table_name: str) -> pd.DataFrame:
+    """Lee una tabla Parquet desde la capa Gold."""
+    return pd.read_parquet(gold_path / f"{table_name}.parquet")
+
+
+def _validate_bronze_files(
+    bronze_path: Path,
+    results: list[dict[str, str]],
+) -> None:
+    """Valida existencia y volumen mínimo de tablas Bronze."""
+    for table_name, minimum_rows in BRONZE_TABLES.items():
+        file_path = bronze_path / f"{table_name}.csv"
+        file_exists = file_path.exists()
+
+        _add_check(
+            results, f"Bronze file exists - {table_name}", file_exists, str(file_path)
+        )
+
+        if file_exists:
+            row_count = len(pd.read_csv(file_path))
+            _add_check(
+                results,
+                f"Bronze minimum rows - {table_name}",
+                row_count >= minimum_rows,
+                f"rows={row_count:,}, minimum={minimum_rows:,}",
+            )
+
+
+def _validate_silver_files(
+    silver_path: Path,
+    results: list[dict[str, str]],
+) -> None:
+    """Valida existencia de tablas Silver."""
+    for table_name in SILVER_TABLES:
+        file_path = silver_path / f"{table_name}.parquet"
+
+        _add_check(
+            results,
+            f"Silver file exists - {table_name}",
+            file_path.exists(),
+            str(file_path),
+        )
+
+
+def _validate_gold_files(
+    gold_path: Path,
+    results: list[dict[str, str]],
+) -> None:
+    """Valida existencia de tablas Gold."""
+    for table_name in GOLD_TABLES:
+        file_path = gold_path / f"{table_name}.parquet"
+
+        _add_check(
+            results,
+            f"Gold file exists - {table_name}",
+            file_path.exists(),
+            str(file_path),
+        )
+
+
+def _validate_gold_row_counts(
+    gold_tables: dict[str, pd.DataFrame],
+    results: list[dict[str, str]],
+) -> None:
+    """Valida conteos principales de la capa Gold."""
+    expected_counts = {
+        "dim_productos": 5000,
+        "dim_tiendas": 150,
+        "dim_clientes": 50001,
+        "fact_ventas": 1000000,
+        "fact_inventario": 750000,
+        "fact_devoluciones": 50000,
+    }
+
+    for table_name, expected_rows in expected_counts.items():
+        row_count = len(gold_tables[table_name])
+
+        _add_check(
+            results,
+            f"Gold row count - {table_name}",
+            row_count == expected_rows,
+            f"rows={row_count:,}, expected={expected_rows:,}",
+        )
+
+
+def _validate_referential_integrity(
+    gold_tables: dict[str, pd.DataFrame],
+    results: list[dict[str, str]],
+) -> None:
+    """Valida integridad referencial entre hechos y dimensiones."""
+    dim_clientes = gold_tables["dim_clientes"]
+    dim_productos = gold_tables["dim_productos"]
+    dim_tiendas = gold_tables["dim_tiendas"]
+    fact_ventas = gold_tables["fact_ventas"]
+    fact_inventario = gold_tables["fact_inventario"]
+    fact_devoluciones = gold_tables["fact_devoluciones"]
+
+    valid_customers = set(dim_clientes["id_miembro"])
+    valid_products = set(dim_productos["art_id"])
+    valid_stores = set(dim_tiendas["id_tienda"])
+    valid_transactions = set(fact_ventas["id_trans"])
+
+    _add_check(
+        results,
+        "Referential integrity - fact_ventas.id_miembro",
+        fact_ventas["id_miembro"].isin(valid_customers).all(),
+        "All sales customers exist in dim_clientes.",
+    )
+
+    _add_check(
+        results,
+        "Referential integrity - fact_ventas.art_id",
+        fact_ventas["art_id"].isin(valid_products).all(),
+        "All sales products exist in dim_productos.",
+    )
+
+    _add_check(
+        results,
+        "Referential integrity - fact_ventas.id_tienda",
+        fact_ventas["id_tienda"].isin(valid_stores).all(),
+        "All sales stores exist in dim_tiendas.",
+    )
+
+    _add_check(
+        results,
+        "Referential integrity - fact_inventario_art_id",
+        fact_inventario["art_id"].isin(valid_products).all(),
+        "All inventory products exist in dim_productos",
+    )
+
+    _add_check(
+        results,
+        "Referential integrity - fact_devoluciones.id_trans_origen",
+        fact_devoluciones["id_trans_origen"].isin(valid_transactions).all(),
+        "All returns reference an existing sale transaction.",
+    )
+
+
+def _validate_business_rules(
+    gold_tables: dict[str, pd.DataFrame],
+    results: list[dict[str, str]],
+) -> None:
+    """Valida reglas de negocio principales implementadas en Gold."""
+    dim_clientes = gold_tables["dim_clientes"]
+    fact_ventas = gold_tables["fact_ventas"]
+    fact_inventario = gold_tables["fact_inventario"]
+    fact_devoluciones = gold_tables["fact_devoluciones"]
+    fact_rfm_clientes = gold_tables["fact_rfm_clientes"]
+
+    _add_check(
+        results,
+        "Anonymous customer exists",
+        0 in set(dim_clientes["id_miembro"]),
+        "dim_clientes contains id_miembro=0.",
+    )
+
+    _add_check(
+        results,
+        "Sales net values is non-negative",
+        (fact_ventas["vr_venta_neto"] >= 0).all(),
+        "All vr_venta_neto values are greater than or equal to zero.",
+    )
+
+    _add_check(
+        results,
+        "Inventory coverage is available",
+        fact_inventario["cobertura_dias"].notna().all(),
+        "All inventory records have cobertura_dias.",
+    )
+
+    stock_alert_condition = pd.Series(
+        pd.to_numeric(
+            fact_inventario.loc[
+                fact_inventario["alerta_quiebre"],
+                "promedio_consumo_14dias",
+            ],
+            errors="coerce",
+        )
+    )
+
+    stock_alert_condition_is_valid = bool((stock_alert_condition > 0).all())
+
+    _add_check(
+        results,
+        "Stock alert requires positive 14-day consumption",
+        (stock_alert_condition_is_valid > 0),
+        "All alerta_quiebre records have promedio_consumo_14dias > 0.",
+    )
+
+    _add_check(
+        results,
+        "Return rate is non-negative",
+        (fact_devoluciones["tasa_devolucion_articulo"] >= 0).all(),
+        "All tasa_devolucion_articulo values are greater than or equal to zero.",
+    )
+
+    rfm_scores_are_valid = (
+        fact_rfm_clientes["r_score"].between(1, 5).all()
+        and fact_rfm_clientes["f_score"].between(1, 5).all()
+        and fact_rfm_clientes["m_score"].between(1, 5).all()
+    )
+
+    _add_check(
+        results,
+        "RFM scores are between 1 and 5",
+        rfm_scores_are_valid,
+        "r_score, f_score and m_score must be in range 1-5.",
+    )
+
+
+def _write_quality_summary(results: list[dict[str, str]], output_path: Path) -> None:
+    """Escribe un resumen de validaciones en formato TXT."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    total_checks = len(results)
+    failed_checks = [result for result in results if result["status"] == "FAIL"]
+    passed_checks = total_checks - len(failed_checks)
+
+    lines = [
+        "RetailMax Medallion Data Pipeline - Quality Checks Summary",
+        "=" * 65,
+        f"Total checks: {total_checks}",
+        f"Passed checks: {passed_checks}",
+        f"Failed checks: {len(failed_checks)}",
+        "",
+        "Detailed results:",
+        "-" * 65,
+    ]
+
+    for result in results:
+        lines.append(
+            f"[{result['status']}] {result['check_name']} - {result['detail']}"
+        )
+
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def run_quality_checks(config: dict) -> None:
+    """Ejecuta validaciones de calidad sobre Bronze, Silver y Gold."""
+    bronze_path = Path(config["paths"]["bronze"])
+    silver_path = Path(config["paths"]["silver"])
+    gold_path = Path(config["paths"]["gold"])
+
+    results: list[dict[str, str]] = []
+
+    _validate_bronze_files(bronze_path, results)
+    _validate_silver_files(silver_path, results)
+    _validate_gold_files(gold_path, results)
+
+    gold_tables = {
+        table_name: _read_gold_table(gold_path, table_name)
+        for table_name in GOLD_TABLES
+    }
+
+    _validate_gold_row_counts(gold_tables, results)
+    _validate_referential_integrity(gold_tables, results)
+    _validate_business_rules(gold_tables, results)
+
+    summary_path = Path("docs/evidence/quality_checks_summary.txt")
+    _write_quality_summary(results, summary_path)
+
+    failed_checks = [result for result in results if result["status"] == "FAIL"]
+
+    print("Validaciones de calidad ejecutadas.")
+    print(f"Total validaciones: {len(results)}")
+    print(f"Validaciones exitosas: {len(results) - len(failed_checks)}")
+    print(f"Validaciones fallidas: {len(failed_checks)}")
+    print(f"Resumen generado en: {summary_path}")
+
+    if failed_checks:
+        failed_names = [result["check_name"] for result in failed_checks]
+        raise ValueError(
+            "Una o más validaciones de calidad fallaron: " + ", ".join(failed_names)
+        )

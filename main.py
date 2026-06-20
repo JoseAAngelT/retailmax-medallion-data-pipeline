@@ -1,5 +1,6 @@
 from src.generate_data import generate_bronze_data
 from src.gold_transform import run_gold_transformations
+from src.quality_checks import run_quality_checks
 from src.silver_transform import run_silver_transformations
 from src.utils import ensure_directories, load_config
 
@@ -19,6 +20,9 @@ def main() -> None:
 
     print("\nPaso 3: Construyendo modelo dimensional en capa Gold...")
     run_gold_transformations(config)
+
+    print("\nPaso 4: Ejecutando validaciones de calidad...")
+    run_quality_checks(config)
 
     print("\nPipeline completado exitosamente.")
 
