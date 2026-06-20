@@ -1,0 +1,142 @@
+RetailMax - Reporte de calidad Silver
+=============================================
+
+Tabla: MSTR_PROVEEDORES
+---------------------------------------------
+Registros totales: 800
+Duplicados exactos: 0
+Registros con al menos un nulo: 0
+Registros conformes: 800
+Porcentaje conforme: 100.00%
+
+Porcentaje de nulos por columna:
+- id_proveedor: 0.00%
+- razon_social: 0.00%
+- pais_origen: 0.00%
+- tiempo_repo_dias: 0.00%
+- calificacion_calidad: 0.00%
+- activo: 0.00%
+
+Tabla: MSTR_ARTICULOS
+---------------------------------------------
+Registros totales: 5,000
+Duplicados exactos: 0
+Registros con al menos un nulo: 0
+Registros conformes: 5,000
+Porcentaje conforme: 100.00%
+
+Porcentaje de nulos por columna:
+- art_id: 0.00%
+- cod_barra: 0.00%
+- desc_art: 0.00%
+- id_categ_n1: 0.00%
+- id_categ_n2: 0.00%
+- id_categ_n3: 0.00%
+- id_proveedor: 0.00%
+- precio_lista: 0.00%
+- peso_kg: 0.00%
+- unid_medida: 0.00%
+- activo: 0.00%
+- fec_alta: 0.00%
+
+Tabla: MSTR_TIENDAS
+---------------------------------------------
+Registros totales: 150
+Duplicados exactos: 0
+Registros con al menos un nulo: 0
+Registros conformes: 150
+Porcentaje conforme: 100.00%
+
+Porcentaje de nulos por columna:
+- id_tienda: 0.00%
+- nom_tienda: 0.00%
+- tipo_tienda: 0.00%
+- id_ciudad: 0.00%
+- id_pais: 0.00%
+- metros_cuadrados: 0.00%
+- activo: 0.00%
+- fec_apertura: 0.00%
+- zona_distribucion_asignada: 0.00%
+
+Tabla: CRM_MIEMBROS
+---------------------------------------------
+Registros totales: 50,000
+Duplicados exactos: 0
+Registros con al menos un nulo: 0
+Registros conformes: 50,000
+Porcentaje conforme: 100.00%
+
+Porcentaje de nulos por columna:
+- id_miembro: 0.00%
+- fec_registro: 0.00%
+- id_ciudad: 0.00%
+- genero: 0.00%
+- rango_edad: 0.00%
+- canal_pref: 0.00%
+- activo: 0.00%
+- fec_ultima_compra: 0.00%
+- antiguedad_dias: 0.00%
+
+Tabla: TRANS_VENTAS
+---------------------------------------------
+Registros totales: 1,000,000
+Duplicados exactos: 0
+Registros con al menos un nulo: 0
+Registros conformes: 1,000,000
+Porcentaje conforme: 100.00%
+
+Porcentaje de nulos por columna:
+- id_trans: 0.00%
+- id_miembro: 0.00%
+- id_tienda: 0.00%
+- art_id: 0.00%
+- fec_trans: 0.00%
+- hra_trans: 0.00%
+- qty_vendida: 0.00%
+- precio_unitario_venta: 0.00%
+- descuento_aplicado: 0.00%
+- tipo_pago: 0.00%
+- canal_venta: 0.00%
+- venta_bruta: 0.00%
+- vr_venta_neto: 0.00%
+- ind_venta_descuento: 0.00%
+
+Tabla: INV_STOCK_DIARIO
+---------------------------------------------
+Registros totales: 750,000
+Duplicados exactos: 0
+Registros con al menos un nulo: 0
+Registros conformes: 750,000
+Porcentaje conforme: 100.00%
+
+Porcentaje de nulos por columna:
+- id_snapshot: 0.00%
+- art_id: 0.00%
+- id_tienda: 0.00%
+- fec_snapshot: 0.00%
+- stock_fisico: 0.00%
+- stock_transito: 0.00%
+- stock_reservado: 0.00%
+- stock_minimo_config: 0.00%
+- stock_maximo_config: 0.00%
+
+Tabla: POST_DEVOLUCIONES
+---------------------------------------------
+Registros totales: 50,000
+Duplicados exactos: 0
+Registros con al menos un nulo: 0
+Registros conformes: 50,000
+Porcentaje conforme: 100.00%
+
+Porcentaje de nulos por columna:
+- id_devolucion: 0.00%
+- id_trans_origen: 0.00%
+- art_id: 0.00%
+- id_tienda: 0.00%
+- fec_devolucion: 0.00%
+- qty_devuelta: 0.00%
+- motivo_cod: 0.00%
+- canal_devolucion: 0.00%
+- estado_devolucion: 0.00%
+- vr_reembolso: 0.00%
+- motivo_desc: 0.00%
