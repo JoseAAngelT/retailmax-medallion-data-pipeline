@@ -1,6 +1,7 @@
 # RetailMax Medallion Data Pipeline
 
 Proyecto desarrollado para el caso de **Retail y Comercio Electrónico**.
+
 El objetivo fue construir un pipeline de datos con arquitectura Medallion, generando datos sintéticos, aplicando transformaciones por capas y creando salidas analíticas para ventas, inventario, devoluciones y clientes.
 
 El pipeline se ejecuta de forma local con Python y guarda evidencia de resultados en Azure Blob Storage.
@@ -24,16 +25,20 @@ Este caso fue seleccionado porque permite cubrir varios conceptos importantes de
 
 ## 2. Tecnologías utilizadas
 
-| Tecnología         | Uso                                               |
-| ------------------ | ------------------------------------------------- |
-| Python             | Desarrollo del pipeline                           |
-| Pandas             | Transformación y modelado de datos                |
-| NumPy              | Generación de datos sintéticos                    |
-| Faker              | Generación de datos ficticios                     |
-| PyArrow            | Escritura de archivos Parquet                     |
-| YAML               | Configuración del proyecto                        |
-| Azure Blob Storage | Almacenamiento cloud de evidencias y salidas Gold |
-| Git                | Control de versiones                              |
+| Tecnología         | Uso                                                     |
+| ------------------ | ------------------------------------------------------- |
+| Python             | Desarrollo del pipeline                                 |
+| Pandas             | Transformación y modelado de datos                      |
+| NumPy              | Generación de datos sintéticos                          |
+| Faker              | Generación de datos ficticios                           |
+| PyArrow            | Escritura de archivos Parquet                           |
+| YAML               | Configuración del proyecto                              |
+| PostgreSQL         | Base de datos relacional local usada como fuente origen |
+| SQLAlchemy         | Conexión y carga de datos desde Python hacia PostgreSQL |
+| psycopg2           | Driver de conexión entre Python y PostgreSQL            |
+| Azure Blob Storage | Almacenamiento cloud de evidencias y salidas Gold       |
+| Apache Airflow     | Definición del DAG de orquestación                      |
+| Git                | Control de versiones                                    |
 
 ---
 
@@ -42,8 +47,10 @@ Este caso fue seleccionado porque permite cubrir varios conceptos importantes de
 El proyecto sigue una arquitectura Medallion:
 
 ```text
-Bronze → Silver → Gold → Quality Checks
+PostgreSQL / Bronze → Silver → Gold → Quality Checks → Azure
 ```
+
+Además de generar archivos Bronze en CSV, las tablas fuente se cargan en PostgreSQL local para simular una base relacional origen.
 
 ### Bronze
 
@@ -222,6 +229,12 @@ El resumen se genera en:
 docs/evidence/quality_checks_summary.txt
 ```
 
+También se genera un reporte básico de calidad de la capa Silver con conteos, duplicados exactos y porcentaje de nulos por columna:
+
+```text
+docs/evidence/silver_quality_report.txt
+```
+
 ---
 
 ## 7. Azure
@@ -278,17 +291,32 @@ retailmax-medallion-data-pipeline/
 │   ├── silver/
 │   └── gold/
 ├── docs/
+│   ├── anomalies.md
+│   ├── architecture.md
 │   ├── azure_setup.md
+│   ├── data_catalog.md
+│   ├── data_lineage.md
+│   ├── data_model.md
+│   ├── governance_security.md
+│   ├── source_er_model.md
 │   └── evidence/
+├── infra/
+│   └── README.md
+├── orchestration/
+│   ├── README.md
+│   └── dags/
+│       └── retailmax_medallion_dag.py
 ├── src/
 │   ├── generate_data.py
 │   ├── silver_transform.py
 │   ├── gold_transform.py
 │   ├── quality_checks.py
-│   ├── cloud_upload.py
+│   ├── silver_quality_report.py
+│   ├── load_to_postgres.py
 │   └── utils.py
 ├── main.py
 ├── requirements.txt
+├── CHANGELOG.md
 ├── README.md
 └── .gitignore
 ```
@@ -313,7 +341,105 @@ Ahí se definen:
 
 ---
 
-## 10. Cómo ejecutar
+## 10. Base relacional PostgreSQL
+
+Además de generar archivos CSV en Bronze, las tablas fuente se cargan en una base PostgreSQL local para simular una fuente relacional.
+
+Script utilizado:
+
+```text
+src/load_to_postgres.py
+```
+
+El script carga las tablas Bronze en PostgreSQL y genera evidencia de conteos por tabla usando consultas `SELECT COUNT(*)`.
+
+La evidencia se encuentra en:
+
+```text
+docs/evidence/postgres_counts_summary.txt
+```
+
+La conexión no guarda contraseñas en el código. Se usan variables de entorno:
+
+```powershell
+$env:PGHOST="localhost"
+$env:PGPORT="5432"
+$env:PGDATABASE="retailmax_source"
+$env:PGUSER="postgres"
+$env:PGPASSWORD="<password>"
+```
+
+---
+
+## 11. Documentación técnica
+
+El proyecto incluye documentación adicional en la carpeta `docs/`.
+
+| Archivo                       | Descripción                                     |
+| ----------------------------- | ----------------------------------------------- |
+| `docs/architecture.md`        | Diagrama general de arquitectura Medallion.     |
+| `docs/source_er_model.md`     | Diagrama ER de las tablas fuente.               |
+| `docs/data_model.md`          | Modelo analítico de la capa Gold.               |
+| `docs/data_lineage.md`        | Linaje de campos calculados en Gold.            |
+| `docs/data_catalog.md`        | Catálogo básico de tablas y campos sensibles.   |
+| `docs/anomalies.md`           | Anomalías consideradas y manejo esperado.       |
+| `docs/governance_security.md` | Consideraciones de gobierno y seguridad.        |
+| `docs/azure_setup.md`         | Recursos creados en Azure y evidencia asociada. |
+
+---
+
+## 12. Orquestación
+
+La ejecución principal del proyecto sigue siendo local mediante:
+
+```powershell
+python main.py
+```
+
+Además, se agregó una definición de DAG para Apache Airflow en:
+
+```text
+orchestration/dags/retailmax_medallion_dag.py
+```
+
+El DAG define el flujo:
+
+```text
+Bronze → Silver → Gold → Quality Checks
+```
+
+Incluye:
+
+* ejecución diaria a las 02:00;
+* dependencias explícitas entre tareas;
+* 3 reintentos por tarea;
+* backoff exponencial;
+* límite de ejecución por tarea.
+
+El DAG se incluye como propuesta de orquestación para un entorno Airflow. No reemplaza la ejecución local, que se mantiene para facilitar la reproducción del proyecto.
+
+---
+
+## 13. Gobierno y seguridad
+
+Se consideraron controles básicos de seguridad y gobierno:
+
+* no se guardan contraseñas ni claves en el repositorio;
+* PostgreSQL usa variables de entorno;
+* Azure Blob Storage tiene acceso anónimo deshabilitado;
+* los contenedores fueron creados con acceso privado;
+* se usa hash SHA-256 para anonimizar el identificador de cliente en Gold;
+* se documentan roles propuestos para Data Engineer, Analyst y Admin.
+
+La documentación completa está en:
+
+```text
+docs/governance_security.md
+```
+
+---
+
+## 14. Cómo ejecutar
 
 Crear entorno virtual:
 
@@ -340,13 +466,19 @@ Ejecutar pipeline completo:
 python main.py
 ```
 
-El pipeline ejecuta:
+Ejecutar reporte de calidad Silver:
 
-```text
-Bronze → Silver → Gold → Quality Checks
+```powershell
+python -m src.silver_quality_report
 ```
 
-Salida esperada:
+Cargar datos Bronze a PostgreSQL:
+
+```powershell
+python -m src.load_to_postgres
+```
+
+Salida esperada del pipeline principal:
 
 ```text
 Pipeline completado exitosamente.
@@ -356,7 +488,29 @@ Validaciones fallidas: 0
 
 ---
 
-## 11. Supuestos y limitaciones
+## 15. Evidencias
+
+Las evidencias se guardan en:
+
+```text
+docs/evidence/
+```
+
+Incluyen:
+
+* resumen de validaciones de calidad;
+* reporte de calidad Silver;
+* conteos de tablas cargadas en PostgreSQL;
+* muestra de anomalías consideradas;
+* capturas de Azure Resource Group;
+* capturas de Azure Storage Account;
+* capturas de contenedores Azure;
+* capturas de archivos Gold cargados;
+* capturas de evidencia cargada en Azure.
+
+---
+
+## 16. Supuestos y limitaciones
 
 Los datos son sintéticos y se generan con una semilla fija para reproducibilidad.
 
@@ -364,19 +518,23 @@ El margen de producto se estima por categoría porque las fuentes no incluyen co
 
 La tasa de conversión real no se calcula porque el caso no incluye una fuente de visitas, sesiones web o tráfico en tienda. Como alternativa, se calculan métricas disponibles desde ventas, como transacciones, ventas netas, ticket promedio y canal de venta.
 
-La orquestación se realiza localmente con `main.py`. En un escenario productivo, esta parte podría migrarse a Azure Data Factory.
+La orquestación con Airflow se incluye como definición de DAG, pero no se ejecutó en un entorno Airflow dentro del alcance actual.
 
-La infraestructura de Azure se creó desde el portal. Como mejora futura, podría definirse con Bicep o Terraform.
+La infraestructura de Azure se creó desde el portal. Se documentó en `/infra`, pero no se implementó IaC completo con Bicep o Terraform.
+
+No se configuraron roles reales en Azure ni evidencia de acceso denegado para un perfil Analista. Esa parte queda documentada como diseño propuesto.
 
 ---
 
-## 12. Próximos pasos
+## 17. Próximos pasos
 
 Algunas mejoras posibles:
 
+* ejecutar el DAG en un entorno Airflow real;
 * automatizar la carga a Azure Blob Storage desde Python;
-* orquestar el pipeline con Azure Data Factory;
-* definir infraestructura como código;
+* definir infraestructura como código con Bicep o Terraform;
+* agregar Azure Key Vault para secretos;
+* agregar Log Analytics y alertas;
 * incorporar una fuente de visitas para calcular conversión real;
 * crear un dashboard en Power BI;
 * agregar pruebas unitarias;
