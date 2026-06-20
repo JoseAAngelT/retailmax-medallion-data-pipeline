@@ -12,10 +12,9 @@ CATEGORY_MARGIN_MAP = {
     "Cuidado personal e higiene": 0.25,
     "Hogar y limpieza": 0.22,
     "Electronica y tecnologia": 0.15,
-    "Ropa y calzado": 0.35,
+    "Ropa y calzado basico": 0.35,
     "Bebes y maternidad": 0.20,
 }
-
 
 RFM_SEGMENT_MAP = {
     "R5-F5-M5": "Champions",
@@ -34,11 +33,11 @@ def _read_silver_table(silver_path: Path, table_name: str) -> pd.DataFrame:
 def _hash_value(value: object) -> str:
     """Genera un hash SHA-256 estable para anonimizar identificadores."""
     value_as_text = str(value)
-    return hashlib.sha3_256(value_as_text.encode("utf-8")).hexdigest()
+    return hashlib.sha256(value_as_text.encode("utf-8")).hexdigest()
 
 
 def _safe_qcut(series: pd.Series, ascending: bool = True) -> pd.Series:
-    """Asigna scores de 1 a 5 usando quantiles de forma tolerante a duplicados."""
+    """Asigna scores de 1 a 5 usando quintiles y tolerando duplicados."""
     ranked_series = series.rank(method="first", ascending=ascending)
 
     try:
@@ -57,7 +56,7 @@ def build_dim_productos(
     articulos: pd.DataFrame,
     proveedores: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Construye la dimensión de productos desde articulos y proveedores."""
+    """Construye la dimensión de productos desde artículos y proveedores."""
     dim_productos = articulos.merge(
         proveedores[
             [
@@ -72,6 +71,9 @@ def build_dim_productos(
         how="left",
     )
 
+    # Regla solicitada: unir artículos con proveedores y calcular un margen
+    # estimado por categoría. Como no existe costo unitario en la fuente,
+    # el margen se estima con una tabla de supuestos por categoría.
     dim_productos["margen_estimado_pct"] = dim_productos["id_categ_n1"].map(
         CATEGORY_MARGIN_MAP
     )
@@ -146,9 +148,11 @@ def build_dim_tiendas(tiendas: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_dim_clientes(miembros: pd.DataFrame) -> pd.DataFrame:
-    """Constuye la dimension de clientes e incluye cliente anónimo."""
+    """Construye la dimensión de clientes e incluye cliente anónimo."""
     dim_clientes = miembros.copy()
 
+    # Regla de seguridad: se genera un hash estable para no exponer
+    # directamente el identificador del cliente en capas analíticas.
     dim_clientes["id_miembro_hash"] = dim_clientes["id_miembro"].apply(_hash_value)
 
     selected_columns = [
@@ -164,8 +168,13 @@ def build_dim_clientes(miembros: pd.DataFrame) -> pd.DataFrame:
         "antiguedad_dias",
     ]
 
-    dim_clientes = dim_clientes[selected_columns]
+    dim_clientes = cast(
+        pd.DataFrame,
+        dim_clientes.loc[:, selected_columns],
+    )
 
+    # Regla solicitada: las ventas sin cliente válido se relacionan con
+    # un cliente anónimo para mantener integridad referencial.
     anonymous_customer = pd.DataFrame(
         [
             {
@@ -206,6 +215,8 @@ def build_fact_ventas(
 
     fact_ventas = ventas.copy()
 
+    # Regla solicitada: si el cliente no existe en dim_clientes,
+    # se asigna el cliente anónimo.
     fact_ventas["id_miembro"] = np.where(
         fact_ventas["id_miembro"].isin(valid_customer_ids),
         fact_ventas["id_miembro"],
@@ -234,11 +245,18 @@ def build_fact_ventas(
         "canal_venta",
     ]
 
-    return fact_ventas[selected_columns]
+    fact_ventas = cast(
+        pd.DataFrame,
+        fact_ventas.loc[:, selected_columns],
+    )
+
+    return fact_ventas
 
 
-def _calculate_avg_consumption_14d(fact_ventas: pd.DataFrame) -> pd.DataFrame:
-    """Calcula el consumo promedio diario de los últimos 14 días por artículo y tienda."""
+def _calculate_avg_consumption_14d(
+    fact_ventas: pd.DataFrame,
+) -> pd.DataFrame:
+    """Calcula consumo promedio diario de los últimos 14 días."""
     max_sale_date = fact_ventas["fec_trans"].max()
     start_date = max_sale_date - pd.Timedelta(days=14)
 
@@ -253,25 +271,37 @@ def _calculate_avg_consumption_14d(fact_ventas: pd.DataFrame) -> pd.DataFrame:
 
     consumption["promedio_consumo_14dias"] = consumption["total_qty_14d"] / 14
 
-    return consumption[["art_id", "id_tienda", "promedio_consumo_14dias"]]
+    consumption = cast(
+        pd.DataFrame,
+        consumption.loc[
+            :,
+            ["art_id", "id_tienda", "promedio_consumo_14dias"],
+        ],
+    )
+
+    return consumption
 
 
 def build_fact_inventario(
     stock: pd.DataFrame,
     fact_ventas: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Construye la tabla de hechos de inventario con alerta de quiebre."""
+    """Construye la tabla de hechos de inventario."""
     fact_inventario = stock.copy()
     avg_consumption = _calculate_avg_consumption_14d(fact_ventas)
 
     fact_inventario = fact_inventario.merge(
-        avg_consumption, on=["art_id", "id_tienda"], how="left"
+        avg_consumption,
+        on=["art_id", "id_tienda"],
+        how="left",
     )
 
     fact_inventario["promedio_consumo_14dias"] = fact_inventario[
         "promedio_consumo_14dias"
     ].fillna(0)
 
+    # Regla solicitada: cobertura_dias = stock_fisico /
+    # promedio_consumo_14dias. Si no hay consumo, no se genera alerta.
     fact_inventario["cobertura_dias"] = np.where(
         fact_inventario["promedio_consumo_14dias"] > 0,
         fact_inventario["stock_fisico"] / fact_inventario["promedio_consumo_14dias"],
@@ -302,7 +332,10 @@ def build_fact_inventario(
         "alerta_quiebre",
     ]
 
-    fact_inventario = cast(pd.DataFrame, fact_inventario.loc[:, selected_columns])
+    fact_inventario = cast(
+        pd.DataFrame,
+        fact_inventario.loc[:, selected_columns],
+    )
 
     return fact_inventario
 
@@ -326,12 +359,23 @@ def build_fact_devoluciones(
         fact_ventas.loc[:, ventas_lookup_columns],
     )
 
-    ventas_lookup = ventas_lookup.rename(columns={"id_trans": "id_trans_origen"})
+    ventas_lookup["id_trans_origen"] = ventas_lookup["id_trans"]
+    ventas_lookup = ventas_lookup.drop(columns=["id_trans"])
 
-    product_lookup = dim_productos[
-        ["art_id", "categoria_n1", "categoria_n2", "categoria_n3"]
+    product_lookup_columns = [
+        "art_id",
+        "categoria_n1",
+        "categoria_n2",
+        "categoria_n3",
     ]
 
+    product_lookup = cast(
+        pd.DataFrame,
+        dim_productos.loc[:, product_lookup_columns],
+    )
+
+    # Regla solicitada: unir devoluciones con venta origen para recuperar
+    # precio original y contexto de la venta.
     fact_devoluciones = devoluciones.merge(
         ventas_lookup,
         on="id_trans_origen",
@@ -429,7 +473,8 @@ def build_fact_rfm_clientes(
         reference_date - fact_rfm["ultima_transaccion"]
     ).dt.days
 
-    # En recencia, menor número de dias representa mejor comportamiento.
+    # Regla solicitada: RFM se calcula sobre clientes activos.
+    # En recencia, menos días desde la última compra representa mejor score.
     fact_rfm["r_score"] = _safe_qcut(
         fact_rfm["recencia_dias"],
         ascending=False,
@@ -468,7 +513,12 @@ def build_fact_rfm_clientes(
         "segmento_valor",
     ]
 
-    return fact_rfm[selected_columns]
+    fact_rfm = cast(
+        pd.DataFrame,
+        fact_rfm.loc[:, selected_columns],
+    )
+
+    return fact_rfm
 
 
 def build_kpi_ventas_diarias(
@@ -500,6 +550,8 @@ def build_kpi_ventas_diarias(
         venta_bruta=("venta_bruta", "sum"),
     )
 
+    # Métricas disponibles para dashboard. La conversión real requiere
+    # una fuente adicional de visitas o sesiones, no incluida en el caso.
     kpi["ticket_promedio"] = np.where(
         kpi["transacciones"] > 0,
         kpi["ventas_netas"] / kpi["transacciones"],
@@ -548,7 +600,7 @@ def build_kpi_top_articulos_categoria(
     fact_ventas: pd.DataFrame,
     dim_productos: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Construye el top 10 de articulos por categoria."""
+    """Construye el top 10 de artículos por categoría."""
     sales = fact_ventas.merge(
         dim_productos[["art_id", "desc_art", "categoria_n1"]],
         on="art_id",
@@ -556,7 +608,8 @@ def build_kpi_top_articulos_categoria(
     )
 
     article_sales = sales.groupby(
-        ["categoria_n1", "art_id", "desc_art"], as_index=False
+        ["categoria_n1", "art_id", "desc_art"],
+        as_index=False,
     ).agg(
         ventas_netas=("vr_venta_neto", "sum"),
         unidades_vendidas=("qty_vendida", "sum"),
@@ -571,13 +624,12 @@ def build_kpi_top_articulos_categoria(
         pd.DataFrame,
         article_sales.loc[article_sales["ranking_categoria"] <= 10, :],
     )
-    top_articles = cast(
-        pd.DataFrame,
-        top_articles.sort_values(
-            by=["categoria_n1", "ranking_categoria"],
-            ascending=[True, True],
-        ),
-    )
+
+    top_articles = top_articles.set_index(
+        ["categoria_n1", "ranking_categoria"]
+    ).sort_index()
+
+    top_articles = top_articles.reset_index()
 
     return top_articles
 
