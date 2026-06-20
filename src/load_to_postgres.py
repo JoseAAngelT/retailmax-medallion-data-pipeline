@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import URL, create_engine
 
 from src.utils import load_config
 
@@ -17,10 +17,10 @@ SOURCE_TABLES = [
 ]
 
 
-def _get_postgres_connection_url() -> str:
-    """Construye la URL de conexión a PostgreSQL desde variables de entorno."""
+def _get_postgres_connection_url() -> URL:
+    """Construye la conexión a PostgreSQL desde variables de entorno."""
     host = os.getenv("PGHOST", "localhost")
-    port = os.getenv("PGPORT", "5432")
+    port = int(os.getenv("PGPORT", "5432"))
     database = os.getenv("PGDATABASE", "retailmax_source")
     user = os.getenv("PGUSER", "postgres")
     password = os.getenv("PGPASSWORD")
@@ -28,7 +28,14 @@ def _get_postgres_connection_url() -> str:
     if password is None:
         raise ValueError("La variable de entorno PGPASSWORD no está configurada.")
 
-    return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
+    return URL.create(
+        drivername="postgresql+psycopg2",
+        username=user,
+        password=password,
+        host=host,
+        port=port,
+        database=database,
+    )
 
 
 def load_bronze_to_postgres(config: dict) -> None:
