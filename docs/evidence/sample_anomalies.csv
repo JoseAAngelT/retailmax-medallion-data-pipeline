@@ -1,0 +1,4 @@
+error_id,layer,table_name,record_id,anomaly_type,description,expected_handling
+1,Bronze,TRANS_VENTAS,1001,DUPLICATED_TRANSACTION,Transacción duplicada exacta,Eliminar duplicados en Silver o registrar en tabla de errores
+2,Bronze,TRANS_VENTAS,1002,INVALID_CUSTOMER,id_miembro no existe en CRM_MIEMBROS,Asignar cliente anónimo o registrar rechazo según regla de calidad
+3,Bronze,TRANS_VENTAS,1003,OUT_OF_RANGE_DATE,Fecha de venta fuera del rango esperado,Detectar en validaciones de calidad y registrar el motivo
