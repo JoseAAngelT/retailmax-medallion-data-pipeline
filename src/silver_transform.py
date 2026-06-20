@@ -217,7 +217,7 @@ def transform_ventas(
     valid_members = set(miembros["id_miembro"].dropna().astype(int))
 
     # Transformación clave: validar id_miembro contra dim_clientes o asignar cliente anonimo.
-    df["id_miembro"] = _to_numeric_series(df, "id_mimebro")
+    df["id_miembro"] = _to_numeric_series(df, "id_miembro")
     df["id_miembro"] = np.where(
         df["id_miembro"].isin(valid_members),
         df["id_miembro"],

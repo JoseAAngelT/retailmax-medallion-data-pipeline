@@ -7,27 +7,28 @@ from faker import Faker
 
 from src.utils import save_csv
 
-# Semillas para reproducibilidad.
+# Semillas para que la generación sintética sea reproducible.
 SEED = 42
 fake = Faker("es_MX")
 Faker.seed(SEED)
 np.random.seed(SEED)
 
 
-# Catálogos sintéticos.
+# Catálogos controlados definidos para campos cuyo dominio no fue
+# especificado explícitamente en el documento de la prueba.
 COUNTRIES = ["Colombia", "Mexico", "Chile", "Peru", "Ecuador"]
 STORE_TYPES = ["hypermarket", "supermarket", "convenience_store", "ecommerce"]
 SALES_CHANNELS = ["physical_store", "ecommerce", "marketplace"]
 PAYMENT_TYPES = ["cash", "credit_card", "debit_card", "digital_wallet"]
 GENDERS = ["M", "F", "No informado", None]
-AGE_GROUPS = ["18-25", "26-35", "36-45", "46-60", "60+", None]
+AGE_GROUPS = ["18-25", "26-35", "36-45", "46-60", "+60", None]
 
 CATEGORY_LVL1 = [
     "Alimentos y bebidas",
     "Cuidado personal e higiene",
     "Hogar y limpieza",
     "Electronica y tecnologia",
-    "Ropa y calzado",
+    "Ropa y calzado basico",
     "Bebes y maternidad",
 ]
 
@@ -35,14 +36,13 @@ RETURN_REASONS = {
     "DAMAGED": "Producto dañado",
     "WRONG_ITEM": "Producto incorrecto",
     "LATE_DELIVERY": "Entrega tardía",
-    "NO_LONGER_NEEDED": "Arrepentimiento del cliente",
+    "CUSTOMER_REGRET": "Arrepentimiento del cliente",
     "QUALITY_ISSUE": "Problema de calidad",
-    "OTHER": "Otro motivo",
 }
 
 
 def _random_dates(size: int, start_date: str, end_date: str) -> list:
-    """Genera una lista de fechas aleatorias en formato YYYY-MM-DD."""
+    """Genera fechas aleatorias entre una fecha inicial y una fecha final."""
     start = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
     delta_days = (end - start).days
@@ -54,7 +54,7 @@ def _random_dates(size: int, start_date: str, end_date: str) -> list:
 
 
 def _random_times(size: int) -> list:
-    """Genera una lista de horas aleatorias en formato HH:MM:SS."""
+    """Genera horas aleatorias dentro de un horario comercial simulado."""
     return [
         f"{np.random.randint(8, 22):02d}:{np.random.randint(0, 60):02d}:00"
         for _ in range(size)
@@ -75,7 +75,10 @@ def generate_proveedores(n: int) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def generate_articulos(n: int, proveedores: pd.DataFrame) -> pd.DataFrame:
+def generate_articulos(
+    n: int,
+    proveedores: pd.DataFrame,
+) -> pd.DataFrame:
     """Genera datos sintéticos para la tabla MSTR_ARTICULOS."""
     category_lvl1 = np.random.choice(CATEGORY_LVL1, n)
 
@@ -92,7 +95,7 @@ def generate_articulos(n: int, proveedores: pd.DataFrame) -> pd.DataFrame:
         "id_proveedor": np.random.choice(proveedores["id_proveedor"], n),
         "precio_lista": np.round(np.random.uniform(10, 5000, n), 2),
         "peso_kg": np.round(np.random.uniform(0.1, 20, n), 2),
-        "unid_medida": np.random.choice([True, False], n, p=[0.97, 0.03]),
+        "unid_medida": np.random.choice(["unidad", "kg", "litro", "pack"], n),
         "activo": np.random.choice([True, False], n, p=[0.97, 0.03]),
         "fec_alta": _random_dates(n, "2021-01-01", "2024-12-31"),
     }
@@ -127,7 +130,9 @@ def generate_miembros(
         "id_ciudad": np.random.choice(tiendas["id_ciudad"], n),
         "genero": np.random.choice(GENDERS, n, p=[0.46, 0.46, 0.06, 0.02]),
         "rango_edad": np.random.choice(
-            AGE_GROUPS, n, p=[0.18, 0.25, 0.22, 0.18, 0.12, 0.05]
+            AGE_GROUPS,
+            n,
+            p=[0.18, 0.25, 0.22, 0.18, 0.12, 0.05],
         ),
         "canal_pref": np.random.choice(SALES_CHANNELS, n),
         "activo": np.random.choice([True, False], n, p=[0.92, 0.08]),
@@ -142,11 +147,12 @@ def _generate_member_ids_for_sales(
     miembros: pd.DataFrame,
     anonymous_rate: float = 0.03,
 ) -> list:
-    """Genera una lista de IDs de cliente para ventas, incluyendo un porcentaje de ventas anónimas."""
+    """Genera IDs de cliente para ventas, incluyendo compras anónimas."""
     member_ids = miembros["id_miembro"].to_numpy()
     selected_members = np.random.choice(member_ids, ventas_count).astype(object)
 
-    # Se simula un porcentaje de ventas anónimas reemplazando algunos IDs de miembros con None.
+    # Regla simulada: algunas ventas no tienen cliente identificado y luego
+    # serán asignadas al cliente anónimo en Silver/Gold.
     anonymous_mask = np.random.random(ventas_count) < anonymous_rate
     selected_members[anonymous_mask] = None
 
@@ -167,7 +173,7 @@ def generate_ventas(
 
     data = {
         "id_trans": range(1, n + 1),
-        "id_mimebro": _generate_member_ids_for_sales(n, miembros),
+        "id_miembro": _generate_member_ids_for_sales(n, miembros),
         "id_tienda": np.random.choice(tiendas["id_tienda"], n),
         "art_id": np.random.choice(articulos["art_id"], n),
         "fec_trans": _random_dates(n, "2025-01-01", "2025-06-15"),
@@ -210,7 +216,7 @@ def generate_devoluciones(
     n: int,
     ventas: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Genera datos sinteticos para la tabla POST_DEVOLUCIONES."""
+    """Genera datos sintéticos para la tabla POST_DEVOLUCIONES."""
     sampled_sales = ventas.sample(
         n=n,
         replace=True,
@@ -242,13 +248,15 @@ def generate_bronze_data(config: dict) -> None:
     bronze_path = Path(config["paths"]["bronze"])
     volumes = config["synthetic_data"]
 
-    # Generación de catálogos y entidades base.
+    # Primero se generan catálogos y entidades base para respetar relaciones
+    # entre proveedores, artículos, tiendas y miembros.
     proveedores = generate_proveedores(volumes["proveedores"])
     articulos = generate_articulos(volumes["articulos"], proveedores)
     tiendas = generate_tiendas(volumes["tiendas"])
     miembros = generate_miembros(volumes["miembros"], tiendas)
 
-    # Generación de tablas transaccionales dependientes de las entidades base.
+    # Las tablas transaccionales se generan después porque dependen de las
+    # entidades base creadas previamente.
     ventas = generate_ventas(
         volumes["ventas"],
         miembros,

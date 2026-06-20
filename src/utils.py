@@ -11,20 +11,20 @@ def load_config(config_path: str = "config/config.yaml") -> dict:
 
 
 def ensure_directories(config: dict) -> None:
-    """Crea los directorios requeridos del proyecto si no existen."""
+    """Crea los directorios requeridos para las capas Medallion."""
     for layer in ["bronze", "silver", "gold"]:
         Path(config["paths"][layer]).mkdir(parents=True, exist_ok=True)
 
 
 def save_csv(df: pd.DataFrame, path: str | Path) -> None:
-    """Guarda un DataFrame como CSV sin índice."""
+    """Guarda un DataFrame en formato CSV sin incluir el índice."""
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False, encoding="utf-8")
 
 
 def save_parquet(df: pd.DataFrame, path: str | Path) -> None:
-    """Guarda un DataFrame como Parquet sin índice."""
+    """Guarda un DataFrame en formato Parquet sin incluir el índice."""
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(path, index=False)
