@@ -1,0 +1,13 @@
+RetailMax - Alerta de fallo del pipeline
+
+Estado: FAILED
+Fecha de fallo: 2026-06-21 08:20:07
+DAG: retailmax_medallion_pipeline
+Tarea: run_quality_checks
+Capa afectada: Gold
+
+Mensaje:
+Una o más validaciones de calidad fallaron durante la ejecución del pipeline.
+
+Acción sugerida:
+Revisar docs/evidence/quality_checks_summary.txt y validar la tabla afectada antes de publicar resultados.

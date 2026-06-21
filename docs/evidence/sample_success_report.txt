@@ -1,0 +1,15 @@
+RetailMax - Reporte diario de ejecución
+
+Estado: SUCCESS
+Fecha de ejecución: 2026-06-21 08:20:07
+
+Resumen:
+- Bronze: 7 tablas procesadas
+- Silver: 7 tablas procesadas
+- Gold: 9 tablas generadas
+- Validaciones de calidad: 47
+- Validaciones fallidas: 0
+- Alertas de calidad: 0
+
+Resultado:
+El pipeline terminó correctamente y las salidas Gold quedaron disponibles para análisis.

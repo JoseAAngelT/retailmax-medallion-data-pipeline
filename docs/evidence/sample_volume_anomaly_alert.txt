@@ -1,0 +1,16 @@
+RetailMax - Alerta de anomalía de volumen
+
+Estado: WARNING
+Fecha de detección: 2026-06-21 08:20:07
+Capa afectada: Bronze
+Tabla: TRANS_VENTAS
+
+Mensaje:
+El volumen procesado difiere más de 30% respecto al promedio esperado de las últimas ejecuciones.
+
+Volumen actual: 1,000,000
+Promedio esperado: 700,000
+Diferencia estimada: 42.86%
+
+Acción sugerida:
+Validar si el incremento corresponde a una carga real o a una duplicidad en la fuente.
