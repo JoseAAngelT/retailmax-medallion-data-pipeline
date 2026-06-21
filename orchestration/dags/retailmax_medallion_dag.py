@@ -6,7 +6,7 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path("/opt/airflow/project")
 sys.path.append(str(PROJECT_ROOT))
 
 from src.generate_data import generate_bronze_data

@@ -23,3 +23,6 @@ Thumbs.db
 
 # Configuración local de VS Code
 .vscode/
+
+# Logs locales generados por Airflow
+orchestration/logs/
