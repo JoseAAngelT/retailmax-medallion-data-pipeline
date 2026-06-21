@@ -39,6 +39,11 @@ Este caso fue seleccionado porque permite cubrir varios conceptos importantes de
 | Azure Blob Storage | Almacenamiento cloud de evidencias y salidas Gold       |
 | Apache Airflow     | Definición del DAG de orquestación                      |
 | Git                | Control de versiones                                    |
+| Bicep              | Infraestructura como Código en Azure                    |
+| Azure CLI          | Despliegue de recursos Azure desde terminal             |
+| Azure Key Vault    | Recurso base para gestión de secretos                   |
+| Log Analytics      | Recurso base para monitoreo                             |
+| Action Group       | Recurso base para alertas                               |
 
 ---
 
@@ -265,6 +270,10 @@ En Azure se cargaron:
 
 * el resumen de validaciones en `evidence`;
 * los archivos Parquet de Gold en `gold`.
+
+También se agregó una versión mínima de Infraestructura como Código con Bicep en `infra/`.
+
+El despliegue creó un Resource Group de prueba con Storage Account, contenedores, Key Vault, Log Analytics Workspace y Action Group. La evidencia se encuentra en `docs/evidence/`.
 
 La configuración está documentada en:
 
@@ -507,6 +516,10 @@ Incluyen:
 * capturas de contenedores Azure;
 * capturas de archivos Gold cargados;
 * capturas de evidencia cargada en Azure.
+* evidencia de despliegue Bicep;
+* ejemplos de reporte diario de éxito;
+* ejemplo de alerta de fallo;
+* ejemplo de alerta por anomalía de volumen.
 
 ---
 
@@ -520,7 +533,7 @@ La tasa de conversión real no se calcula porque el caso no incluye una fuente d
 
 La orquestación con Airflow se incluye como definición de DAG, pero no se ejecutó en un entorno Airflow dentro del alcance actual.
 
-La infraestructura de Azure se creó desde el portal. Se documentó en `/infra`, pero no se implementó IaC completo con Bicep o Terraform.
+Se agregó una versión mínima de IaC con Bicep y se desplegó como prueba. No incluye una implementación completa con backend remoto, ambientes dev/prod separados ni gestión avanzada de secretos, pero deja una base reproducible para aprovisionar recursos principales.
 
 No se configuraron roles reales en Azure ni evidencia de acceso denegado para un perfil Analista. Esa parte queda documentada como diseño propuesto.
 
