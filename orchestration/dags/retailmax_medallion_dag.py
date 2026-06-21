@@ -9,11 +9,11 @@ from airflow.operators.python import PythonOperator
 PROJECT_ROOT = Path("/opt/airflow/project")
 sys.path.append(str(PROJECT_ROOT))
 
-from src.generate_data import generate_bronze_data
-from src.gold_transform import run_gold_transformations
-from src.quality_checks import run_quality_checks
-from src.silver_transform import run_silver_transformations
-from src.utils import ensure_directories, load_config
+from src.generate_data import generate_bronze_data  # noqa: E402
+from src.gold_transform import run_gold_transformations  # noqa: E402
+from src.quality_checks import run_quality_checks  # noqa: E402
+from src.silver_transform import run_silver_transformations  # noqa: E402
+from src.utils import ensure_directories, load_config  # noqa: E402
 
 default_args = {
     "owner": "data-engineering",

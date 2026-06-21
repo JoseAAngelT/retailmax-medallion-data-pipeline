@@ -1,53 +1,53 @@
-# Azure Setup
+# Configuración de Azure
 
-Este proyecto utiliza Azure Blob Storage como capa de almacenamiento en la nube para el pipeline Medallion de RetailMax.
+Este documento resume los recursos de Azure usados en el proyecto RetailMax.
 
-## Recursos creados
+## Recursos creados desde Azure Portal
 
-- Resource Group: `rg-retailmax-data-pipeline`
-- Storage Account: `retailmaxlakeja`
-- Región: `East US`
-- Tipo de cuenta: `StorageV2`
-- Replicación: `Locally-redundant storage (LRS)`
-- Nivel de acceso: `Hot`
-- Acceso anónimo a blobs: `Deshabilitado`
-- Transferencia segura: `Habilitado`
-- Versión mínima de TLS: `1.2`
+Para la primera versión del proyecto, los recursos se crearon desde Azure Portal.
 
-## Contenedores creados
+| Recurso | Nombre | Región | Uso |
+|---|---|---|---|
+| Resource Group | `rg-retailmax-data-pipeline` | East US | Agrupar recursos principales del proyecto. |
+| Storage Account | `retailmaxlakeja` | East US | Almacenar evidencias y salidas analíticas. |
+| Container | `bronze` | East US | Capa Bronze. |
+| Container | `silver` | East US | Capa Silver. |
+| Container | `gold` | East US | Capa Gold. |
+| Container | `evidence` | East US | Evidencias del proyecto. |
 
-- `bronze`
-- `silver`
-- `gold`
-- `evidence`
+## Configuración del Storage Account
 
-Todos los contenedores fueron configurados con acceso privado.
+| Configuración | Valor |
+|---|---|
+| Tipo de cuenta | StorageV2 |
+| Rendimiento | Standard |
+| Replicación | LRS |
+| Nivel de acceso | Hot |
+| Acceso anónimo al blob | Deshabilitado |
+| Transferencia segura | Habilitada |
+| TLS mínimo | 1.2 |
+| Eliminación temporal de blobs | Habilitada |
+| Eliminación temporal de contenedores | Habilitada |
 
-## Archivos cargados
+## Evidencias cargadas
 
-### Contenedor `evidence`
+En el contenedor `evidence` se cargaron archivos de evidencia como:
 
-- `quality_checks_summary.txt`
+- resumen de validaciones de calidad;
+- reporte de calidad Silver;
+- conteos de PostgreSQL;
+- evidencias de Airflow;
+- evidencias de IaC;
+- ejemplos de alertas y reportes operativos.
 
-### Contenedor `gold`
+En el contenedor `gold` se cargaron salidas analíticas en formato Parquet.
 
-- `dim_clientes.parquet`
-- `dim_productos.parquet`
-- `dim_tiendas.parquet`
-- `fact_ventas.parquet`
-- `fact_inventario.parquet`
-- `fact_devoluciones.parquet`
-- `fact_rfm_clientes.parquet`
-- `kpi_ventas_diarias.parquet`
-- `kpi_top_articulos_categoria.parquet`
+## Infraestructura como Código
 
-## Decisión técnica
+Además de la creación inicial desde Azure Portal, se agregó una versión mínima de Infraestructura como Código usando Bicep.
 
-Azure Blob Storage se utilizó como una versión simplificada de data lake para almacenar evidencias y salidas analíticas del pipeline. Para este alcance, se priorizó una configuración simple, privada y de bajo costo usando `Standard` + `LRS`.
+Archivos:
 
-## Consideraciones
-
-El procesamiento principal del pipeline se ejecuta localmente mediante:
-
-```powershell
-python main.py
+```text
+infra/main.bicep
+infra/parameters.dev.json

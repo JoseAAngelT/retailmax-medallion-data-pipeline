@@ -100,3 +100,4 @@ erDiagram
         string estado_devolucion
         float vr_reembolso
     }
+```

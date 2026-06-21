@@ -9,13 +9,17 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Cachés de herramientas
+.ruff_cache/
+
 # Variables de entorno y secretos
 .env
 
 # Datos generados por el pipeline
-data/bronze/
-data/silver/
-data/gold/
+data/
+
+# Logs locales generados por Airflow
+orchestration/logs/
 
 # Archivos del sistema
 .DS_Store
@@ -23,6 +27,3 @@ Thumbs.db
 
 # Configuración local de VS Code
 .vscode/
-
-# Logs locales generados por Airflow
-orchestration/logs/
