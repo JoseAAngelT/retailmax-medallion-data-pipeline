@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus"
+    },
+    "environment": {
+      "value": "dev"
+    },
+    "storageAccountName": {
+      "value": "retailmaxlakejadev"
+    },
+    "keyVaultName": {
+      "value": "kv-retailmax-ja-dev"
+    },
+    "logAnalyticsName": {
+      "value": "log-retailmax-dev"
+    },
+    "actionGroupName": {
+      "value": "ag-retailmax-dev"
+    },
+    "alertEmailAddress": {
+      "value": "replace-with-your-email@example.com"
+    }
+  }
+}

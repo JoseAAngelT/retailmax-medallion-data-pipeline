@@ -39,3 +39,19 @@ $env:PGPORT="5432"
 $env:PGDATABASE="retailmax_source"
 $env:PGUSER="postgres"
 $env:PGPASSWORD="<password>"
+
+## Evidencia de despliegue
+
+El template Bicep fue desplegado correctamente en el Resource Group `rg-retailmax-data-pipeline-dev`.
+
+Recursos creados:
+
+- Storage Account: `retailmaxlakejadev`
+- Containers: `bronze`, `silver`, `gold`, `evidence`
+- Key Vault: `kv-retailmax-ja-dev`
+- Log Analytics Workspace: `log-retailmax-dev`
+- Action Group: `ag-retailmax-dev`
+
+La evidencia visual se encuentra en `docs/evidence/`.
+
+Nota: el archivo `parameters.dev.json` usa un correo de ejemplo para no exponer correos personales en el repositorio.
