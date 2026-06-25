@@ -1,8 +1,10 @@
 import os
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
-from sqlalchemy import URL, create_engine
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
 from src.utils import load_config
 
@@ -38,21 +40,38 @@ def _get_postgres_connection_url() -> URL:
     )
 
 
+def _validate_bronze_files(bronze_path: Path) -> None:
+    """Valida que existan todos los archivos CSV de Bronze antes de cargar."""
+    missing_files = [
+        str(bronze_path / f"{table_name}.csv")
+        for table_name in SOURCE_TABLES
+        if not (bronze_path / f"{table_name}.csv").exists()
+    ]
+
+    if missing_files:
+        raise FileNotFoundError(
+            "No se encontraron los siguientes archivos Bronze:\n"
+            + "\n".join(missing_files)
+        )
+
+
 def load_bronze_to_postgres(config: dict) -> None:
     """Carga las tablas Bronze CSV a PostgreSQL y genera evidencia de conteos."""
     bronze_path = Path(config["paths"]["bronze"])
+    _validate_bronze_files(bronze_path)
+
     connection_url = _get_postgres_connection_url()
     engine = create_engine(connection_url)
 
-    counts: list[dict[str, int]] = []
+    execution_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    counts: list[dict[str, int | str]] = []
 
     with engine.begin() as connection:
-        for table_name in SOURCE_TABLES:
-            file_path = bronze_path / f"{table_name}.csv"
-            df = pd.read_csv(file_path)
+        for source_table_name in SOURCE_TABLES:
+            file_path = bronze_path / f"{source_table_name}.csv"
+            sql_table_name = source_table_name.lower()
 
-            # PostgreSQL maneja mejor nombres de tabla en minúsculas.
-            sql_table_name = table_name.lower()
+            df = pd.read_csv(file_path)
 
             df.to_sql(
                 sql_table_name,
@@ -67,7 +86,8 @@ def load_bronze_to_postgres(config: dict) -> None:
 
             counts.append(
                 {
-                    "table_name": sql_table_name,
+                    "source_table": source_table_name,
+                    "postgres_table": sql_table_name,
                     "row_count": row_count,
                 }
             )
@@ -78,18 +98,24 @@ def load_bronze_to_postgres(config: dict) -> None:
     lines = [
         "RetailMax - Evidencia de carga PostgreSQL",
         "=" * 50,
-        "Base de datos: retailmax_source",
+        f"execution_time: {execution_time}",
+        "database: retailmax_source",
+        "load_mode: replace",
         "",
         "Resultados SELECT COUNT(*) por tabla:",
         "-" * 50,
     ]
 
     for result in counts:
-        lines.append(f"{result['table_name']}: {result['row_count']:,}")
+        lines.append(
+            f"{result['postgres_table']}: {result['row_count']:,} "
+            f"(source: {result['source_table']})"
+        )
 
     summary_path.write_text("\n".join(lines), encoding="utf-8")
 
     print("Carga PostgreSQL completada correctamente.")
+    print(f"Tablas cargadas: {len(SOURCE_TABLES)}")
     print(f"Resumen generado en: {summary_path}")
 
 

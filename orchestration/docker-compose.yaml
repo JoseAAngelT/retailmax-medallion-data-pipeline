@@ -10,6 +10,11 @@ x-airflow-common:
     AIRFLOW__WEBSERVER__SECRET_KEY: local-dev-secret-key
     _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
     _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+    PGHOST: ${PGHOST:-host.docker.internal}
+    PGPORT: ${PGPORT:-5432}
+    PGDATABASE: ${PGDATABASE:-retailmax_source}
+    PGUSER: ${PGUSER:-postgres}
+    PGPASSWORD: ${PGPASSWORD}
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs

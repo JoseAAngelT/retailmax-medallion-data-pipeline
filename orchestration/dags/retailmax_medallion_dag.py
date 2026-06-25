@@ -9,8 +9,10 @@ from airflow.operators.python import PythonOperator
 PROJECT_ROOT = Path("/opt/airflow/project")
 sys.path.append(str(PROJECT_ROOT))
 
+from src.bronze_ingestion import ingest_postgres_to_bronze  # noqa: E402
 from src.generate_data import generate_bronze_data  # noqa: E402
 from src.gold_transform import run_gold_transformations  # noqa: E402
+from src.load_to_postgres import load_bronze_to_postgres  # noqa: E402
 from src.quality_checks import run_quality_checks  # noqa: E402
 from src.silver_transform import run_silver_transformations  # noqa: E402
 from src.utils import ensure_directories, load_config  # noqa: E402
@@ -26,8 +28,15 @@ default_args = {
 
 
 def _load_project_config() -> dict:
-    """Carga la configuración del proyecto."""
+    """Carga la configuración del proyecto usando rutas absolutas en Airflow."""
     config = load_config(str(PROJECT_ROOT / "config" / "config.yaml"))
+
+    for layer in ["bronze", "silver", "gold"]:
+        config["paths"][layer] = str(PROJECT_ROOT / config["paths"][layer])
+
+    config["paths"]["bronze_ingested"] = str(PROJECT_ROOT / "data/bronze_ingested")
+    config["paths"]["evidence"] = str(PROJECT_ROOT / "docs/evidence")
+
     ensure_directories(config)
     return config
 
@@ -36,6 +45,18 @@ def run_bronze_layer() -> None:
     """Ejecuta la generación de datos Bronze."""
     config = _load_project_config()
     generate_bronze_data(config)
+
+
+def run_postgres_load_layer() -> None:
+    """Carga las tablas Bronze CSV a PostgreSQL local."""
+    config = _load_project_config()
+    load_bronze_to_postgres(config)
+
+
+def run_bronze_ingestion_layer() -> None:
+    """Ingesta tablas desde PostgreSQL hacia Bronze Parquet con auditoría."""
+    config = _load_project_config()
+    ingest_postgres_to_bronze(config)
 
 
 def run_silver_layer() -> None:
@@ -58,7 +79,10 @@ def run_quality_layer() -> None:
 
 with DAG(
     dag_id="retailmax_medallion_pipeline",
-    description="Pipeline Medallion RetailMax: Bronze, Silver, Gold y calidad.",
+    description=(
+        "Pipeline Medallion RetailMax con generación Bronze, "
+        "carga PostgreSQL, ingesta Bronze Parquet, Silver, Gold y calidad."
+    ),
     default_args=default_args,
     start_date=datetime(2026, 6, 20),
     schedule="0 2 * * *",
@@ -71,6 +95,16 @@ with DAG(
     bronze = PythonOperator(
         task_id="generate_bronze_data",
         python_callable=run_bronze_layer,
+    )
+
+    postgres_load = PythonOperator(
+        task_id="load_bronze_to_postgres",
+        python_callable=run_postgres_load_layer,
+    )
+
+    bronze_ingestion = PythonOperator(
+        task_id="ingest_postgres_to_bronze",
+        python_callable=run_bronze_ingestion_layer,
     )
 
     silver = PythonOperator(
@@ -90,4 +124,13 @@ with DAG(
 
     end = EmptyOperator(task_id="end")
 
-    start >> bronze >> silver >> gold >> quality_checks >> end
+    (
+        start
+        >> bronze
+        >> postgres_load
+        >> bronze_ingestion
+        >> silver
+        >> gold
+        >> quality_checks
+        >> end
+    )

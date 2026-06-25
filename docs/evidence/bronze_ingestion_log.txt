@@ -1,0 +1,57 @@
+RetailMax - Bronze ingestion log
+==================================================
+batch_id: a0096a13-72d4-4d55-bbc5-10229b0655c6
+source_system: postgresql_local
+ingestion_timestamp: 2026-06-25 00:48:36
+output_format: parquet
+partition_columns: year, month, day
+
+Tables processed:
+--------------------------------------------------
+table: mstr_proveedores
+records_processed: 800
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_proveedores/year=2026/month=06/day=25/mstr_proveedores_a0096a13-72d4-4d55-bbc5-10229b0655c6.parquet
+file_size_mb: 0.02
+duration_seconds: 0.1
+
+table: mstr_articulos
+records_processed: 5000
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_articulos/year=2026/month=06/day=25/mstr_articulos_a0096a13-72d4-4d55-bbc5-10229b0655c6.parquet
+file_size_mb: 0.21
+duration_seconds: 0.13
+
+table: mstr_tiendas
+records_processed: 150
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_tiendas/year=2026/month=06/day=25/mstr_tiendas_a0096a13-72d4-4d55-bbc5-10229b0655c6.parquet
+file_size_mb: 0.01
+duration_seconds: 0.03
+
+table: crm_miembros
+records_processed: 50000
+output_file: /opt/airflow/project/data/bronze_ingested/crm_miembros/year=2026/month=06/day=25/crm_miembros_a0096a13-72d4-4d55-bbc5-10229b0655c6.parquet
+file_size_mb: 0.53
+duration_seconds: 0.66
+
+table: trans_ventas
+records_processed: 1000000
+output_file: /opt/airflow/project/data/bronze_ingested/trans_ventas/year=2026/month=06/day=25/trans_ventas_a0096a13-72d4-4d55-bbc5-10229b0655c6.parquet
+file_size_mb: 22.21
+duration_seconds: 12.68
+
+table: inv_stock_diario
+records_processed: 750000
+output_file: /opt/airflow/project/data/bronze_ingested/inv_stock_diario/year=2026/month=06/day=25/inv_stock_diario_a0096a13-72d4-4d55-bbc5-10229b0655c6.parquet
+file_size_mb: 9.52
+duration_seconds: 6.61
+
+table: post_devoluciones
+records_processed: 50000
+output_file: /opt/airflow/project/data/bronze_ingested/post_devoluciones/year=2026/month=06/day=25/post_devoluciones_a0096a13-72d4-4d55-bbc5-10229b0655c6.parquet
+file_size_mb: 1.19
+duration_seconds: 0.71
+
+Summary
+--------------------------------------------------
+total_tables: 7
+total_records_processed: 1855950
+total_duration_seconds: 20.93
