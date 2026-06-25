@@ -1,6 +1,6 @@
 RetailMax - Pipeline execution report
 ============================================================
-execution_time: 2026-06-25 02:50:08
+execution_time: 2026-06-25 03:05:26
 pipeline_status: completed
 
 Resumen de componentes ejecutados:
@@ -37,9 +37,9 @@ Bronze ingestion evidence:
 ------------------------------------------------------------
 RetailMax - Bronze ingestion log
 ==================================================
-batch_id: 19a23d41-f7e4-4476-9f20-45406832655f
+batch_id: 11c4049c-f387-4f95-af76-4bb882f44e88
 source_system: postgresql_local
-ingestion_timestamp: 2026-06-25 02:49:19
+ingestion_timestamp: 2026-06-25 03:04:36
 output_format: parquet
 partition_columns: year, month, day
 
@@ -47,43 +47,43 @@ Tables processed:
 --------------------------------------------------
 table: mstr_proveedores
 records_processed: 800
-output_file: /opt/airflow/project/data/bronze_ingested/mstr_proveedores/year=2026/month=06/day=25/mstr_proveedores_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_proveedores/year=2026/month=06/day=25/mstr_proveedores_11c4049c-f387-4f95-af76-4bb882f44e88.parquet
 file_size_mb: 0.02
-duration_seconds: 0.08
+duration_seconds: 0.09
 
 table: mstr_articulos
 records_processed: 5000
-output_file: /opt/airflow/project/data/bronze_ingested/mstr_articulos/year=2026/month=06/day=25/mstr_articulos_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_articulos/year=2026/month=06/day=25/mstr_articulos_11c4049c-f387-4f95-af76-4bb882f44e88.parquet
 file_size_mb: 0.21
 duration_seconds: 0.12
 
 table: mstr_tiendas
 records_processed: 150
-output_file: /opt/airflow/project/data/bronze_ingested/mstr_tiendas/year=2026/month=06/day=25/mstr_tiendas_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_tiendas/year=2026/month=06/day=25/mstr_tiendas_11c4049c-f387-4f95-af76-4bb882f44e88.parquet
 file_size_mb: 0.01
 duration_seconds: 0.03
 
 table: crm_miembros
 records_processed: 50000
-output_file: /opt/airflow/project/data/bronze_ingested/crm_miembros/year=2026/month=06/day=25/crm_miembros_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+output_file: /opt/airflow/project/data/bronze_ingested/crm_miembros/year=2026/month=06/day=25/crm_miembros_11c4049c-f387-4f95-af76-4bb882f44e88.parquet
 file_size_mb: 0.53
-duration_seconds: 0.78
+duration_seconds: 0.77
 
 table: trans_ventas
 records_processed: 1000000
-output_file: /opt/airflow/project/data/bronze_ingested/trans_ventas/year=2026/month=06/day=25/trans_ventas_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+output_file: /opt/airflow/project/data/bronze_ingested/trans_ventas/year=2026/month=06/day=25/trans_ventas_11c4049c-f387-4f95-af76-4bb882f44e88.parquet
 file_size_mb: 22.21
-duration_seconds: 13.12
+duration_seconds: 12.99
 
 table: inv_stock_diario
 records_processed: 750000
-output_file: /opt/airflow/project/data/bronze_ingested/inv_stock_diario/year=2026/month=06/day=25/inv_stock_diario_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+output_file: /opt/airflow/project/data/bronze_ingested/inv_stock_diario/year=2026/month=06/day=25/inv_stock_diario_11c4049c-f387-4f95-af76-4bb882f44e88.parquet
 file_size_mb: 9.52
-duration_seconds: 6.76
+duration_seconds: 6.69
 
 table: post_devoluciones
 records_processed: 50000
-output_file: /opt/airflow/project/data/bronze_ingested/post_devoluciones/year=2026/month=06/day=25/post_devoluciones_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+output_file: /opt/airflow/project/data/bronze_ingested/post_devoluciones/year=2026/month=06/day=25/post_devoluciones_11c4049c-f387-4f95-af76-4bb882f44e88.parquet
 file_size_mb: 1.19
 duration_seconds: 0.6
 
@@ -91,19 +91,19 @@ Summary
 --------------------------------------------------
 total_tables: 7
 total_records_processed: 1855950
-total_duration_seconds: 21.49
+total_duration_seconds: 21.28
 
 Partitioned Gold output evidence:
 ------------------------------------------------------------
 RetailMax - Evidencia de salida Gold particionada
 ==================================================
-execution_time: 2026-06-25 02:49:55
+execution_time: 2026-06-25 03:05:12
 
 source_table: /opt/airflow/project/data/gold/kpi_ventas_diarias.parquet
 partitioned_table: /opt/airflow/project/data/gold_partitioned/kpi_ventas_diarias
 partition_columns: year, month
 records_processed: 34110
-parquet_files_generated: 104
+parquet_files_generated: 117
 
 Descripcion:
 La salida particionada se genera como parte del pipeline para optimizar el consumo analitico por periodo.
@@ -170,7 +170,7 @@ Great Expectations evidence:
 ------------------------------------------------------------
 RetailMax - Great Expectations style summary
 ==================================================
-execution_time: 2026-06-25 02:50:02
+execution_time: 2026-06-25 03:05:21
 great_expectations_version: 1.18.1
 total_expectations: 14
 successful_expectations: 14
@@ -187,7 +187,7 @@ Pipeline errors evidence:
 ------------------------------------------------------------
 RetailMax - Pipeline errors summary
 ==================================================
-execution_time: 2026-06-25 02:50:05
+execution_time: 2026-06-25 03:05:23
 total_error_records: 1
 
 Errors by severity:

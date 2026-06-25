@@ -17,6 +17,7 @@ from src.generate_data import generate_bronze_data  # noqa: E402
 from src.gold_transform import run_gold_transformations  # noqa: E402
 from src.great_expectations_checks import run_great_expectations_checks  # noqa: E402
 from src.load_to_postgres import load_bronze_to_postgres  # noqa: E402
+from src.notifications import generate_pipeline_notification  # noqa: E402
 from src.quality_checks import run_quality_checks  # noqa: E402
 from src.silver_transform import run_silver_transformations  # noqa: E402
 from src.utils import ensure_directories, load_config  # noqa: E402
@@ -107,6 +108,12 @@ def run_execution_report_layer() -> None:
     generate_execution_report(config)
 
 
+def run_notification_layer() -> None:
+    """Genera una notificacion operativa local del pipeline."""
+    config = _load_project_config()
+    generate_pipeline_notification(config)
+
+
 with DAG(
     dag_id="retailmax_medallion_pipeline",
     description=(
@@ -172,6 +179,11 @@ with DAG(
         python_callable=run_execution_report_layer,
     )
 
+    notification = PythonOperator(
+        task_id="generate_pipeline_notification",
+        python_callable=run_notification_layer,
+    )
+
     end = EmptyOperator(task_id="end")
 
     (
@@ -186,5 +198,6 @@ with DAG(
         >> great_expectations_checks
         >> error_handling
         >> execution_report
+        >> notification
         >> end
     )
