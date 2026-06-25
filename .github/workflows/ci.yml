@@ -1,0 +1,50 @@
+name: RetailMax CI
+
+on:
+  push:
+    branches:
+      - main
+      - improvements/full-deliverables
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install base dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pandas pyarrow pyyaml faker sqlalchemy psycopg2-binary great-expectations
+
+      - name: Run Ruff checks
+        run: |
+          ruff check .
+
+      - name: Validate Python imports
+        run: |
+          python - <<'PY'
+          import src.generate_data
+          import src.silver_transform
+          import src.gold_transform
+          import src.quality_checks
+          import src.load_to_postgres
+          import src.bronze_ingestion
+          import src.create_partitioned_outputs
+          import src.error_handling
+          import src.great_expectations_checks
+          import src.execution_report
+          import src.notifications
+
+          print("All project modules imported successfully.")
+          PY
