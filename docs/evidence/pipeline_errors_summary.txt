@@ -1,0 +1,13 @@
+RetailMax - Pipeline errors summary
+==================================================
+execution_time: 2026-06-25 13:51:58
+total_error_records: 1
+
+Errors by severity:
+--------------------------------------------------
+info: 1
+
+Output files:
+--------------------------------------------------
+parquet: /opt/airflow/project/data/errors/pipeline_errors.parquet
+csv: /opt/airflow/project/docs/evidence/pipeline_errors.csv

@@ -1,13 +1,15 @@
 RetailMax - Evidencia de carga PostgreSQL
 ==================================================
-Base de datos: retailmax_source
+execution_time: 2026-06-24 16:55:23
+database: retailmax_source
+load_mode: replace
 
 Resultados SELECT COUNT(*) por tabla:
 --------------------------------------------------
-mstr_proveedores: 800
-mstr_articulos: 5,000
-mstr_tiendas: 150
-crm_miembros: 50,000
-trans_ventas: 1,000,000
-inv_stock_diario: 750,000
-post_devoluciones: 50,000
+mstr_proveedores: 800 (source: MSTR_PROVEEDORES)
+mstr_articulos: 5,000 (source: MSTR_ARTICULOS)
+mstr_tiendas: 150 (source: MSTR_TIENDAS)
+crm_miembros: 50,000 (source: CRM_MIEMBROS)
+trans_ventas: 1,000,000 (source: TRANS_VENTAS)
+inv_stock_diario: 750,000 (source: INV_STOCK_DIARIO)
+post_devoluciones: 50,000 (source: POST_DEVOLUCIONES)

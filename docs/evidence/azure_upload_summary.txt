@@ -1,0 +1,20 @@
+RetailMax - Azure upload summary
+============================================================
+execution_time: 2026-06-25 13:52:22
+storage_account: retailmaxlakeja
+
+Upload summary:
+------------------------------------------------------------
+total_files_uploaded: 40
+gold_files_uploaded: 9
+evidence_files_uploaded: 31
+
+Containers:
+------------------------------------------------------------
+gold_container: gold
+evidence_container: evidence
+
+Output files:
+------------------------------------------------------------
+manifest: /opt/airflow/project/docs/evidence/azure_upload_manifest.csv
+summary: /opt/airflow/project/docs/evidence/azure_upload_summary.txt

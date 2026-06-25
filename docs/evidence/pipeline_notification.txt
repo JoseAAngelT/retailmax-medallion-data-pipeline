@@ -1,0 +1,23 @@
+RetailMax - Pipeline notification
+==================================================
+notification_time: 2026-06-25 13:52:03
+pipeline_status: success
+
+Operational summary:
+--------------------------------------------------
+Pipeline execution completed successfully.
+Great Expectations: 14/14 successful (0 failed)
+Pipeline errors: info: 1
+Execution report: docs/evidence/pipeline_execution_report.txt
+
+Quality checks reference:
+--------------------------------------------------
+RetailMax Medallion Data Pipeline - Resumen de calidad
+=================================================================
+Total de validaciones: 47
+Validaciones exitosas: 47
+Validaciones fallidas: 0
+
+Next action:
+--------------------------------------------------
+This local notification can be extended to email, Microsoft Teams, Slack or another alerting channel using environment variables.

@@ -1,10 +1,12 @@
-RetailMax - Evidencia de salida particionada
+RetailMax - Evidencia de salida Gold particionada
 ==================================================
+execution_time: 2026-06-25 13:51:46
 
-Tabla origen: data/gold/kpi_ventas_diarias.parquet
-Tabla particionada: data/gold_partitioned/kpi_ventas_diarias
-Columnas de partición: year, month
-Archivos Parquet generados: 13
+source_table: /opt/airflow/project/data/gold/kpi_ventas_diarias.parquet
+partitioned_table: /opt/airflow/project/data/gold_partitioned/kpi_ventas_diarias
+partition_columns: year, month
+records_processed: 34110
+parquet_files_generated: 182
 
-Nota:
-La salida particionada se genera como evidencia separada para no modificar el pipeline principal.
+Descripcion:
+La salida particionada se genera como parte del pipeline para optimizar el consumo analitico por periodo.

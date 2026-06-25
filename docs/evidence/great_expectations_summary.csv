@@ -1,0 +1,15 @@
+table_name,expectation,success,unexpected_count,details
+fact_ventas,expect_column_values_to_not_be_null:id_trans,True,0,
+fact_ventas,expect_column_values_to_be_unique:id_trans,True,0,
+fact_ventas,expect_column_values_to_not_be_null:fec_trans,True,0,
+fact_ventas,expect_column_values_to_be_between:vr_venta_neto:0:None,True,0,"mostly=1.0, success_ratio=1.0000"
+fact_ventas,expect_column_values_to_be_in_set:canal_venta,True,0,[]
+fact_inventario,expect_column_values_to_not_be_null:id_snapshot,True,0,
+fact_inventario,expect_column_values_to_be_between:stock_fisico:0:None,True,0,"mostly=1.0, success_ratio=1.0000"
+fact_inventario,expect_column_values_to_be_between:cobertura_dias:0:None,True,0,"mostly=0.95, success_ratio=1.0000"
+fact_devoluciones,expect_column_values_to_not_be_null:id_devolucion,True,0,
+fact_devoluciones,expect_column_values_to_be_between:qty_devuelta:1:None,True,0,"mostly=1.0, success_ratio=1.0000"
+fact_devoluciones,expect_column_values_to_be_between:tasa_devolucion_articulo:0:1,True,0,"mostly=1.0, success_ratio=1.0000"
+dim_clientes,expect_column_values_to_not_be_null:id_miembro,True,0,
+dim_clientes,expect_column_values_to_not_be_null:id_miembro_hash,True,0,
+dim_clientes,expect_column_values_to_be_in_set:genero,True,0,[]

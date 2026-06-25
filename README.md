@@ -1,80 +1,144 @@
 # RetailMax Medallion Data Pipeline
 
-Proyecto de ingeniería de datos basado en un escenario de **Retail y Comercio Electrónico**.
+Proyecto de ingenieria de datos basado en un escenario de **Retail y Comercio Electronico**.
 
-El objetivo fue construir un pipeline de datos end-to-end con arquitectura Medallion, generando datos sintéticos, transformándolos por capas y creando salidas analíticas para ventas, inventario, devoluciones y clientes.
-
-El pipeline se ejecuta localmente con Python, usa PostgreSQL como fuente relacional simulada, almacena evidencias en Azure Blob Storage y cuenta con una ejecución local de Airflow usando Docker.
+El objetivo fue construir un pipeline end-to-end con arquitectura Medallion, integrando generacion de datos sinteticos, procesamiento por capas, PostgreSQL como fuente relacional simulada, orquestacion con Airflow, validaciones de calidad, evidencias operativas, pruebas automatizadas y publicacion de salidas en Azure Blob Storage.
 
 ---
 
-## 1. Escenario
+## 1. Descripcion general
 
-Se trabajó con el escenario de **Retail y Comercio Electrónico** porque permite cubrir conceptos importantes de ingeniería de datos:
+El proyecto simula el flujo de datos de una compania retail llamada RetailMax. A partir de tablas fuente generadas de forma sintetica, el pipeline procesa informacion de proveedores, articulos, tiendas, clientes, ventas, inventario y devoluciones.
 
-* generación de datos sintéticos;
-* procesamiento por capas Bronze, Silver y Gold;
-* carga en una base relacional;
-* limpieza y transformación de datos;
-* modelo dimensional;
-* validaciones de calidad;
-* almacenamiento cloud;
-* orquestación del pipeline;
-* base de Infraestructura como Código.
+El flujo principal cubre:
 
----
-
-## 2. Tecnologías utilizadas
-
-| Tecnología              | Uso                                          |
-| ----------------------- | -------------------------------------------- |
-| Python                  | Desarrollo principal del pipeline.           |
-| Pandas / NumPy          | Transformación y generación de datos.        |
-| Faker                   | Generación de datos sintéticos.              |
-| PyArrow                 | Escritura de archivos Parquet.               |
-| YAML                    | Configuración del proyecto.                  |
-| PostgreSQL              | Fuente relacional local simulada.            |
-| SQLAlchemy / psycopg2   | Conexión y carga hacia PostgreSQL.           |
-| Azure Blob Storage      | Almacenamiento de evidencias y salidas Gold. |
-| Bicep                   | Infraestructura como Código mínima en Azure. |
-| Azure CLI               | Despliegue de recursos Azure.                |
-| Docker / Docker Compose | Ejecución local de Airflow.                  |
-| Apache Airflow          | Orquestación del pipeline.                   |
-| Git / GitHub            | Control de versiones y entrega del proyecto. |
+* generacion de datos fuente;
+* carga de datos Bronze a PostgreSQL local;
+* ingesta desde PostgreSQL hacia Bronze Parquet con metadatos de auditoria;
+* transformaciones Silver;
+* modelo analitico Gold;
+* salida Gold particionada;
+* validaciones de calidad personalizadas;
+* validaciones formales estilo Great Expectations;
+* tabla de errores del pipeline;
+* reporte operativo consolidado;
+* notificacion local;
+* historial de ejecuciones;
+* carga de salidas Gold y evidencias a Azure Blob Storage;
+* pruebas unitarias con pytest;
+* validacion automatica con GitHub Actions.
 
 ---
 
-## 3. Arquitectura
+## 2. Arquitectura general
 
 El proyecto sigue una arquitectura Medallion:
 
 ```text
-Bronze → Silver → Gold → Quality Checks
+Source CSV
+  -> PostgreSQL local
+  -> Bronze Parquet con auditoria
+  -> Silver
+  -> Gold
+  -> Gold particionado
+  -> Quality Checks
+  -> Great Expectations style checks
+  -> Error Table
+  -> Execution Report
+  -> Notification
+  -> Azure Blob Storage
 ```
 
-Además:
+El pipeline se puede ejecutar de dos formas:
 
-* las tablas Bronze se cargan en PostgreSQL local para simular una fuente relacional;
-* las salidas Gold y evidencias se cargan en Azure Blob Storage;
-* el DAG de Airflow se ejecutó localmente con Docker Compose;
-* se agregó una base de IaC con Bicep para recursos Azure.
+```text
+1. Localmente con Python.
+2. Orquestado con Apache Airflow usando Docker Compose.
+```
 
-Documentación relacionada:
+Documentacion relacionada:
 
 ```text
 docs/architecture.md
 docs/source_er_model.md
 docs/data_model.md
 docs/data_lineage.md
+docs/data_catalog.md
+docs/governance_security.md
 ```
 
 ---
 
-## 4. Capas del pipeline
+## 3. Tecnologias utilizadas
+
+| Tecnologia              | Uso                                                  |
+| ----------------------- | ---------------------------------------------------- |
+| Python                  | Desarrollo principal del pipeline.                   |
+| Pandas / NumPy          | Transformacion, limpieza y generacion de datos.      |
+| Faker                   | Generacion de datos sinteticos.                      |
+| PyArrow                 | Lectura y escritura de archivos Parquet.             |
+| YAML                    | Configuracion del proyecto.                          |
+| PostgreSQL              | Fuente relacional local simulada.                    |
+| SQLAlchemy / psycopg2   | Conexion y carga hacia PostgreSQL.                   |
+| Apache Airflow          | Orquestacion del pipeline.                           |
+| Docker / Docker Compose | Ejecucion local de Airflow.                          |
+| Azure Blob Storage      | Publicacion de salidas Gold y evidencias.            |
+| Azure Storage SDK       | Carga programatica de archivos a Blob Storage.       |
+| Great Expectations      | Base para validaciones formales estilo expectations. |
+| Pytest                  | Pruebas unitarias de modulos clave.                  |
+| Ruff                    | Validacion estatica y estilo de codigo.              |
+| GitHub Actions          | CI para Ruff, pytest e imports principales.          |
+| Bicep                   | Base de Infraestructura como Codigo en Azure.        |
+| Git / GitHub            | Versionamiento y entrega del proyecto.               |
+
+---
+
+## 4. Flujo del pipeline
+
+El flujo final orquestado en Airflow es:
+
+```text
+start
+  -> register_pipeline_start
+  -> generate_bronze_data
+  -> load_bronze_to_postgres
+  -> ingest_postgres_to_bronze
+  -> run_silver_transformations
+  -> run_gold_transformations
+  -> create_partitioned_gold_outputs
+  -> run_quality_checks
+  -> run_great_expectations_checks
+  -> generate_pipeline_error_table
+  -> generate_execution_report
+  -> generate_pipeline_notification
+  -> upload_outputs_to_azure
+  -> register_pipeline_end
+  -> end
+```
+
+El DAG incluye:
+
+* dependencias explicitas entre tareas;
+* ejecucion diaria a las 02:00;
+* reintentos por tarea;
+* backoff exponencial;
+* timeout de ejecucion;
+* control de estado por corrida;
+* generacion automatica de evidencias.
+
+Archivo principal del DAG:
+
+```text
+orchestration/dags/retailmax_medallion_dag.py
+```
+
+---
+
+## 5. Capas del pipeline
 
 ### Bronze
 
-Genera las tablas fuente en CSV:
+Se generan las tablas fuente en CSV:
 
 ```text
 MSTR_PROVEEDORES
@@ -86,24 +150,59 @@ INV_STOCK_DIARIO
 POST_DEVOLUCIONES
 ```
 
+Estas tablas se cargan en PostgreSQL local para simular una fuente relacional.
+
+Despues, el pipeline ejecuta una ingesta desde PostgreSQL hacia Bronze Parquet, agregando columnas de auditoria:
+
+```text
+ingestion_timestamp
+source_system
+batch_id
+```
+
+Salida principal:
+
+```text
+data/bronze_ingested/
+```
+
+Evidencia:
+
+```text
+docs/evidence/bronze_ingestion_log.txt
+```
+
+---
+
 ### Silver
 
-Limpia, tipa y estandariza los datos.
+La capa Silver limpia, tipa y estandariza los datos.
 
 Incluye:
 
-* conversión de fechas y columnas numéricas;
+* conversion de fechas;
+* conversion de columnas numericas;
 * limpieza de textos;
-* estandarización de género;
-* imputación de rango de edad;
-* validación de clientes en ventas;
-* asignación de cliente anónimo;
-* cálculo de venta bruta y venta neta;
-* mapeo de motivos de devolución.
+* estandarizacion de campos categoricos;
+* imputacion de rango de edad;
+* validacion de clientes en ventas;
+* asignacion de cliente anonimo;
+* calculo de venta bruta y venta neta;
+* normalizacion de motivos de devolucion.
+
+Salida principal:
+
+```text
+data/silver/
+```
+
+---
 
 ### Gold
 
-Construye el modelo analítico final:
+La capa Gold construye el modelo analitico final.
+
+Tablas principales:
 
 ```text
 dim_productos
@@ -117,13 +216,13 @@ kpi_ventas_diarias
 kpi_top_articulos_categoria
 ```
 
-También se generó una muestra de salida particionada para:
+Tambien se genera una salida particionada de `kpi_ventas_diarias` por periodo:
 
 ```text
 data/gold_partitioned/kpi_ventas_diarias/
 ```
 
-La evidencia está en:
+Evidencia:
 
 ```text
 docs/evidence/partitioned_outputs_summary.txt
@@ -131,29 +230,29 @@ docs/evidence/partitioned_outputs_summary.txt
 
 ---
 
-## 5. Modelo analítico
+## 6. Modelo analitico
 
-La capa Gold contiene dimensiones, hechos y KPIs.
+| Tabla                         | Proposito                                               |
+| ----------------------------- | ------------------------------------------------------- |
+| `dim_productos`               | Analisis por producto, categoria y proveedor.           |
+| `dim_tiendas`                 | Analisis por tienda, ciudad y pais.                     |
+| `dim_clientes`                | Segmentacion de clientes con identificador anonimizado. |
+| `fact_ventas`                 | Analisis de ventas, descuentos, canales y pagos.        |
+| `fact_inventario`             | Seguimiento de stock, cobertura y riesgo de quiebre.    |
+| `fact_devoluciones`           | Analisis de devoluciones por articulo, motivo y tienda. |
+| `fact_rfm_clientes`           | Segmentacion RFM por recencia, frecuencia y valor.      |
+| `kpi_ventas_diarias`          | Indicadores diarios de ventas.                          |
+| `kpi_top_articulos_categoria` | Ranking de articulos por categoria.                     |
 
-| Tabla                         | Propósito                                                  |
-| ----------------------------- | ---------------------------------------------------------- |
-| `dim_productos`               | Análisis por producto, categoría y proveedor.              |
-| `dim_tiendas`                 | Análisis por tienda, ciudad, país y zona.                  |
-| `dim_clientes`                | Segmentación de clientes con identificador anonimizado.    |
-| `fact_ventas`                 | Análisis de ventas, descuentos y canales.                  |
-| `fact_inventario`             | Seguimiento de stock, cobertura y riesgo de quiebre.       |
-| `fact_devoluciones`           | Análisis de devoluciones por artículo y motivo.            |
-| `fact_rfm_clientes`           | Segmentación de clientes por recencia, frecuencia y valor. |
-| `kpi_ventas_diarias`          | KPIs diarios para análisis ejecutivo.                      |
-| `kpi_top_articulos_categoria` | Ranking de artículos por categoría.                        |
-
-`dim_clientes` incluye un hash SHA-256 del identificador del cliente y un cliente anónimo con `id_miembro = 0` para mantener integridad referencial.
+`dim_clientes` incluye un hash SHA-256 del identificador del cliente y un cliente anonimo con `id_miembro = 0` para mantener integridad referencial.
 
 ---
 
-## 6. Volúmenes generados
+## 7. Volumenes procesados
 
-| Tabla Bronze        | Registros |
+### Tablas fuente Bronze
+
+| Tabla               | Registros |
 | ------------------- | --------: |
 | `MSTR_PROVEEDORES`  |       800 |
 | `MSTR_ARTICULOS`    |     5,000 |
@@ -163,7 +262,15 @@ La capa Gold contiene dimensiones, hechos y KPIs.
 | `INV_STOCK_DIARIO`  |   750,000 |
 | `POST_DEVOLUCIONES` |    50,000 |
 
-| Tabla Gold                    | Registros |
+Total procesado en Bronze ingestion:
+
+```text
+1,855,950 registros
+```
+
+### Tablas Gold principales
+
+| Tabla                         | Registros |
 | ----------------------------- | --------: |
 | `dim_productos`               |     5,000 |
 | `dim_tiendas`                 |       150 |
@@ -172,53 +279,119 @@ La capa Gold contiene dimensiones, hechos y KPIs.
 | `fact_inventario`             |   750,000 |
 | `fact_devoluciones`           |    50,000 |
 | `fact_rfm_clientes`           |    49,999 |
-| `kpi_ventas_diarias`          |    14,850 |
+| `kpi_ventas_diarias`          |    34,110 |
 | `kpi_top_articulos_categoria` |        60 |
 
 ---
 
-## 7. Calidad de datos
+## 8. Calidad de datos
 
-El pipeline incluye validaciones personalizadas en:
+El proyecto incluye dos capas de calidad.
+
+### Validaciones personalizadas
+
+Archivo:
 
 ```text
 src/quality_checks.py
 ```
 
-Se validan:
+Validaciones principales:
 
 * existencia de archivos Bronze, Silver y Gold;
-* volúmenes mínimos;
+* volumenes minimos;
 * conteos esperados;
-* integridad entre hechos y dimensiones;
-* existencia del cliente anónimo;
+* integridad referencial entre hechos y dimensiones;
+* existencia de cliente anonimo;
 * venta neta no negativa;
 * cobertura de inventario;
-* alerta de quiebre;
-* tasa de devolución;
-* scores RFM.
+* reglas de alerta de quiebre;
+* tasa de devolucion no negativa;
+* scores RFM entre 1 y 5.
 
-Resultado de la última ejecución:
+Resultado de la ultima ejecucion:
 
 ```text
-Total validaciones: 47
+Total de validaciones: 47
 Validaciones exitosas: 47
 Validaciones fallidas: 0
+```
+
+Evidencia:
+
+```text
+docs/evidence/quality_checks_summary.txt
+```
+
+### Validaciones estilo Great Expectations
+
+Archivo:
+
+```text
+src/great_expectations_checks.py
+```
+
+Se agrego una capa de validaciones formales estilo expectations sobre tablas Gold. Debido a la version usada de Great Expectations, se implementaron validaciones declarativas con pandas y se registro la version instalada de la libreria.
+
+Resultado:
+
+```text
+Great Expectations version: 1.18.1
+Total expectations: 14
+Successful expectations: 14
+Failed expectations: 0
 ```
 
 Evidencias:
 
 ```text
-docs/evidence/quality_checks_summary.txt
-docs/evidence/silver_quality_report.txt
-docs/evidence/pipeline_errors.csv
+docs/evidence/great_expectations_summary.csv
+docs/evidence/great_expectations_summary.txt
 ```
 
 ---
 
-## 8. PostgreSQL
+## 9. Errores, reportes y observabilidad
 
-Las tablas Bronze se cargan en PostgreSQL local para simular una fuente relacional.
+El pipeline genera una tabla de errores operativos:
+
+```text
+data/errors/pipeline_errors.parquet
+docs/evidence/pipeline_errors.csv
+docs/evidence/pipeline_errors_summary.txt
+```
+
+Cuando no se detectan errores criticos, se genera un registro informativo:
+
+```text
+NO_ERRORS_DETECTED
+severity: info
+```
+
+Tambien se generan evidencias operativas:
+
+```text
+docs/evidence/pipeline_execution_report.txt
+docs/evidence/pipeline_notification.txt
+docs/evidence/pipeline_run_history.csv
+docs/evidence/pipeline_run_history_summary.txt
+```
+
+Estas salidas permiten revisar:
+
+* estado de ejecucion;
+* total de ejecuciones registradas;
+* duracion del ultimo run;
+* volumenes procesados;
+* estado de calidad;
+* estado de errores;
+* resumen operativo del pipeline.
+
+---
+
+## 10. PostgreSQL
+
+PostgreSQL se usa como fuente relacional local simulada.
 
 Script:
 
@@ -226,7 +399,7 @@ Script:
 src/load_to_postgres.py
 ```
 
-La conexión usa variables de entorno:
+La conexion usa variables de entorno:
 
 ```powershell
 $env:PGHOST="localhost"
@@ -236,6 +409,20 @@ $env:PGUSER="postgres"
 $env:PGPASSWORD="<password>"
 ```
 
+Para Airflow en Docker, `PGHOST` debe apuntar al host de Docker:
+
+```env
+PGHOST=host.docker.internal
+```
+
+Archivo local de variables:
+
+```text
+orchestration/.env
+```
+
+Este archivo no se sube al repositorio.
+
 Evidencia:
 
 ```text
@@ -244,59 +431,82 @@ docs/evidence/postgres_counts_summary.txt
 
 ---
 
-## 9. Azure e Infraestructura como Código
+## 11. Azure Blob Storage
 
-Se usó Azure Blob Storage como almacenamiento cloud para evidencias y salidas analíticas.
+El pipeline sube salidas Gold y evidencias a Azure Blob Storage.
 
-Recursos principales:
+Script:
 
 ```text
-Resource Group: rg-retailmax-data-pipeline
-Storage Account: retailmaxlakeja
-Containers: bronze, silver, gold, evidence
+src/upload_to_azure.py
 ```
 
-También se agregó una base de IaC con Bicep:
+Contenedores usados:
+
+```text
+gold
+evidence
+```
+
+La carga usa la variable de entorno:
+
+```text
+AZURE_STORAGE_CONNECTION_STRING
+```
+
+Esta variable se configura localmente o en `orchestration/.env`, pero no se versiona.
+
+Evidencias:
+
+```text
+docs/evidence/azure_upload_manifest.csv
+docs/evidence/azure_upload_summary.txt
+```
+
+Ultima ejecucion registrada:
+
+```text
+total_files_uploaded: 40
+gold_files_uploaded: 9
+evidence_files_uploaded: 31
+```
+
+---
+
+## 12. Infraestructura como Codigo
+
+Se agrego una base de Infraestructura como Codigo con Bicep.
+
+Archivos:
 
 ```text
 infra/main.bicep
 infra/parameters.dev.json
+infra/README.md
 ```
 
-El template Bicep fue desplegado con Azure CLI en un Resource Group de prueba y creó:
+Recursos contemplados:
 
 * Storage Account;
-* contenedores `bronze`, `silver`, `gold` y `evidence`;
+* contenedores para capas de datos y evidencias;
 * Key Vault;
 * Log Analytics Workspace;
 * Action Group.
 
-Documentación:
+Documentacion relacionada:
 
 ```text
 docs/azure_setup.md
 infra/README.md
 ```
 
-Evidencia:
-
-```text
-docs/evidence/azure_bicep_deployment_resources.png
-```
-
 ---
 
-## 10. Orquestación
+## 13. Orquestacion con Airflow
 
-La ejecución principal puede realizarse con:
+Airflow se ejecuta localmente con Docker Compose.
 
-```powershell
-python main.py
-```
-
-También se configuró Airflow local con Docker Compose.
-
-Archivos principales:
+Archivos:
 
 ```text
 orchestration/docker-compose.yaml
@@ -305,55 +515,97 @@ orchestration/.env.example
 orchestration/dags/retailmax_medallion_dag.py
 ```
 
-Flujo del DAG:
+Ejecucion:
 
-```text
-start → generate_bronze_data → run_silver_transformations → run_gold_transformations → run_quality_checks → end
+```powershell
+cd orchestration
+copy .env.example .env
+docker compose build
+docker compose up -d
 ```
 
-El DAG incluye:
-
-* ejecución diaria a las 02:00;
-* dependencias explícitas;
-* 3 reintentos por tarea;
-* backoff exponencial;
-* timeout por tarea.
-
-Evidencias:
+Abrir Airflow:
 
 ```text
-docs/evidence/airflow_dag_success.png
-docs/evidence/airflow_dag_graph_success.png
+http://localhost:8080
 ```
+
+Credenciales locales:
+
+```text
+airflow / airflow
+```
+
+El archivo real `.env` debe contener las variables locales necesarias, por ejemplo:
+
+```env
+PGHOST=host.docker.internal
+PGPORT=5432
+PGDATABASE=retailmax_source
+PGUSER=postgres
+PGPASSWORD=<your-postgres-password>
+AZURE_STORAGE_CONNECTION_STRING=<connection-string>
+```
+
+No se debe subir `orchestration/.env` al repositorio.
 
 ---
 
-## 11. Gobierno y seguridad
+## 14. Pruebas y CI
 
-Controles aplicados:
+El proyecto incluye pruebas unitarias con pytest.
 
-* no se guardan contraseñas ni claves en el repositorio;
-* PostgreSQL usa variables de entorno;
-* Azure Blob Storage tiene acceso privado;
-* las capturas de Azure fueron editadas para ocultar información sensible;
-* `data/`, `.venv/`, cachés y logs locales están ignorados por Git;
-* se genera `id_miembro_hash` con SHA-256 en Gold;
-* Key Vault, Log Analytics y Action Group fueron creados como recursos base por Bicep.
-
-Documentación:
+Carpeta:
 
 ```text
-docs/governance_security.md
-docs/data_catalog.md
-CHANGELOG.md
+tests/
 ```
+
+Pruebas agregadas:
+
+```text
+test_error_handling.py
+test_great_expectations_checks.py
+test_notifications.py
+test_partitioned_outputs.py
+test_pipeline_state.py
+test_upload_to_azure.py
+```
+
+Ejecucion local:
+
+```powershell
+python -m pytest
+```
+
+Resultado local:
+
+```text
+6 passed
+```
+
+Tambien se agrego CI con GitHub Actions:
+
+```text
+.github/workflows/ci.yml
+```
+
+El workflow valida:
+
+* instalacion de dependencias base;
+* Ruff;
+* pytest;
+* imports principales del proyecto.
 
 ---
 
-## 12. Estructura del proyecto
+## 15. Estructura del proyecto
 
 ```text
 retailmax-medallion-data-pipeline/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── config/
 │   └── config.yaml
 ├── docs/
@@ -376,17 +628,23 @@ retailmax-medallion-data-pipeline/
 │   ├── README.md
 │   └── dags/
 ├── src/
-│   ├── generate_data.py
-│   ├── silver_transform.py
-│   ├── gold_transform.py
-│   ├── quality_checks.py
-│   ├── load_to_postgres.py
-│   ├── silver_quality_report.py
-│   ├── notification_samples.py
-│   ├── pipeline_error_report.py
+│   ├── bronze_ingestion.py
 │   ├── create_partitioned_outputs.py
+│   ├── error_handling.py
+│   ├── execution_report.py
+│   ├── generate_data.py
+│   ├── gold_transform.py
+│   ├── great_expectations_checks.py
+│   ├── load_to_postgres.py
+│   ├── notifications.py
+│   ├── pipeline_state.py
+│   ├── quality_checks.py
+│   ├── silver_transform.py
+│   ├── upload_to_azure.py
 │   └── utils.py
+├── tests/
 ├── main.py
+├── pytest.ini
 ├── requirements.txt
 ├── CHANGELOG.md
 ├── README.md
@@ -397,7 +655,7 @@ La carpeta `data/` no se sube al repositorio porque contiene archivos generados.
 
 ---
 
-## 13. Cómo ejecutar
+## 16. Como ejecutar localmente
 
 Crear y activar entorno virtual:
 
@@ -413,47 +671,35 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Ejecutar pipeline completo:
+Ejecutar pipeline Python principal:
 
 ```powershell
 python main.py
 ```
 
-Ejecutar scripts auxiliares:
+Ejecutar pruebas:
 
 ```powershell
-python -m src.silver_quality_report
-python -m src.load_to_postgres
-python -m src.notification_samples
-python -m src.pipeline_error_report
-python -m src.create_partitioned_outputs
+python -m pytest
 ```
 
-Ejecutar Airflow local:
+Validar estilo:
+
+```powershell
+ruff check .
+```
+
+Ejecutar Airflow:
 
 ```powershell
 cd orchestration
-copy .env.example .env
 docker compose build
-docker compose up airflow-init
 docker compose up -d
-```
-
-Abrir:
-
-```text
-http://localhost:8080
-```
-
-Credenciales locales:
-
-```text
-airflow / airflow
 ```
 
 ---
 
-## 14. Evidencias
+## 17. Evidencias principales
 
 Las evidencias se encuentran en:
 
@@ -461,71 +707,101 @@ Las evidencias se encuentran en:
 docs/evidence/
 ```
 
-Incluyen:
+Archivos principales:
 
-* validaciones de calidad;
-* reporte Silver;
-* conteos de PostgreSQL;
-* errores controlados del pipeline;
-* muestra de anomalías;
-* reportes y alertas operativas simuladas;
-* evidencia de salida particionada;
-* capturas de Azure;
-* evidencia de despliegue Bicep;
-* evidencia de ejecución Airflow.
+```text
+postgres_counts_summary.txt
+bronze_ingestion_log.txt
+quality_checks_summary.txt
+great_expectations_summary.txt
+great_expectations_summary.csv
+pipeline_errors_summary.txt
+pipeline_errors.csv
+partitioned_outputs_summary.txt
+pipeline_execution_report.txt
+pipeline_notification.txt
+pipeline_run_history_summary.txt
+pipeline_run_history.csv
+azure_upload_summary.txt
+azure_upload_manifest.csv
+```
+
+Tambien se incluyen capturas de Airflow, Azure y despliegues cuando aplican.
 
 ---
 
-## 15. Alcance y limitaciones
+## 18. Seguridad y gobierno
 
-Este proyecto se desarrolló como una prueba técnica end-to-end en un periodo corto de trabajo. Se priorizó construir una solución funcional, reproducible y defendible, cubriendo las partes principales del flujo de datos: generación, carga relacional, procesamiento Medallion, calidad, documentación, nube y orquestación local.
+Controles aplicados:
 
-Algunos componentes se implementaron como una base funcional o evidencia separada, en lugar de una solución productiva completa. Esto permitió mantener el proyecto estable y demostrar el entendimiento general del flujo sin agregar complejidad innecesaria al cierre de la entrega.
+* no se versionan contrasenas ni connection strings;
+* `orchestration/.env` esta ignorado por Git;
+* `data/`, logs, caches y `.venv/` estan ignorados;
+* PostgreSQL usa variables de entorno;
+* Azure Storage usa `AZURE_STORAGE_CONNECTION_STRING`;
+* se evita imprimir secretos completos en consola;
+* se genera `id_miembro_hash` con SHA-256 en Gold;
+* se documentan recursos base de seguridad en Azure como Key Vault;
+* las evidencias operativas no contienen claves ni tokens.
+
+Documentacion relacionada:
+
+```text
+docs/governance_security.md
+docs/data_catalog.md
+CHANGELOG.md
+```
+
+---
+
+## 19. Alcance y limitaciones
+
+Este proyecto se desarrollo como una prueba tecnica end-to-end. Se priorizo construir una solucion funcional, reproducible y defendible, cubriendo las fases principales de un pipeline de datos moderno.
 
 ### Alcance implementado
 
-* Generación de datos sintéticos con semilla fija y parámetros configurables.
-* Carga de tablas Bronze a PostgreSQL local.
-* Pipeline Medallion con capas Bronze, Silver y Gold.
-* Modelo analítico con dimensiones, hechos y KPIs.
-* Validaciones de calidad personalizadas.
-* Reporte de calidad para la capa Silver.
-* Muestra de errores controlados del pipeline.
-* Salida Gold particionada como evidencia separada.
-* Carga de evidencias y salidas Gold en Azure Blob Storage.
-* Infraestructura mínima con Bicep desplegada mediante Azure CLI.
-* Airflow ejecutado localmente con Docker Compose.
-* Documentación de arquitectura, modelo de datos, linaje, catálogo, anomalías, gobierno y seguridad.
-* CHANGELOG con el avance del proyecto.
+* Generacion de datos sinteticos con volumen configurable.
+* Carga de Bronze CSV a PostgreSQL local.
+* Ingesta PostgreSQL a Bronze Parquet con auditoria.
+* Procesamiento Medallion: Bronze, Silver y Gold.
+* Modelo dimensional con dimensiones, hechos y KPIs.
+* Salida Gold particionada.
+* Validaciones personalizadas de calidad.
+* Validaciones formales estilo Great Expectations.
+* Tabla de errores del pipeline.
+* Reporte operativo consolidado.
+* Notificacion local.
+* Historial de ejecuciones.
+* Carga de salidas Gold y evidencias a Azure Blob Storage.
+* Orquestacion local con Airflow y Docker Compose.
+* CI con GitHub Actions.
+* Pruebas unitarias con pytest.
+* Base de Infraestructura como Codigo con Bicep.
+* Documentacion tecnica y evidencias.
 
 ### Limitaciones actuales
 
-* La ingesta principal no se ejecuta desde PostgreSQL hacia Azure como proceso incremental completo. En esta versión, PostgreSQL se usa como fuente relacional simulada y el pipeline principal trabaja con las salidas locales generadas.
-* No se implementó ingesta incremental real. El pipeline está diseñado para ser reproducible y sobrescribir salidas, evitando duplicados en ejecuciones repetidas.
-* La tabla de errores del pipeline se dejó como muestra controlada en `docs/evidence/pipeline_errors.csv`, no como tabla integrada a cada etapa del flujo.
-* El particionamiento Gold se implementó como evidencia separada para `kpi_ventas_diarias`, sin modificar el pipeline principal.
-* Airflow se ejecutó localmente con Docker Compose. No se desplegó en un entorno administrado o productivo.
-* Las alertas y reportes operativos se dejaron como ejemplos generados en archivos de evidencia. No se conectaron a correo, Teams o Azure Monitor.
-* Bicep se implementó como base funcional de Infraestructura como Código. No incluye ambientes dev/prod separados, backend remoto de estado ni una integración completa con secretos.
-* Key Vault, Log Analytics y Action Group fueron creados como recursos base, pero no se integraron completamente al pipeline.
-* No se implementaron roles reales en Azure ni evidencia de acceso denegado para un perfil Analyst.
-* No se agregó una fuente de visitas o sesiones, por lo que no se calcula tasa de conversión real.
-
-Estas limitaciones quedan documentadas como siguientes pasos. Algunas se dejaron fuera por tiempo y porque varias herramientas, como Airflow, Bicep y componentes de monitoreo en Azure, se estaban aplicando por primera vez dentro de un proyecto end-to-end. Aun así, se intentó avanzar en cada fase para dejar evidencia práctica, una base reproducible y puntos claros de mejora.
+* El pipeline opera en modo batch/full refresh; no implementa incrementalidad real por watermark.
+* Airflow se ejecuta localmente con Docker Compose, no en un entorno administrado.
+* Las notificaciones se generan como archivo local; no se conectaron a correo, Teams o Slack.
+* Los secretos se manejan con variables de entorno locales; no se integro Key Vault directamente al runtime.
+* Great Expectations se uso como base de versionamiento y estilo de validaciones, pero no se implemento un Data Context completo.
+* La infraestructura Bicep es una base funcional, no una plataforma productiva multiambiente.
+* No se implemento una fuente real de sesiones o visitas, por lo que no se calcula una tasa de conversion real.
 
 ---
 
-## 16. Próximos pasos
+## 20. Proximos pasos
 
 Mejoras posibles:
 
-* integrar Key Vault con el pipeline;
-* configurar alertas reales con Azure Monitor;
-* implementar roles reales y evidencia de acceso denegado;
-* convertir la ingesta PostgreSQL → Bronze cloud en incremental;
-* agregar metadatos de auditoría en Bronze;
-* ejecutar Airflow en un entorno administrado;
-* automatizar la carga a Azure desde el pipeline;
-* agregar pruebas unitarias o Great Expectations;
-* crear un dashboard en Power BI;
-* incorporar una fuente de tráfico para calcular conversión real.
+* implementar cargas incrementales con watermark;
+* integrar Azure Key Vault al runtime;
+* enviar notificaciones reales a Teams, Slack o correo;
+* desplegar Airflow en un entorno administrado;
+* formalizar un Data Context completo de Great Expectations;
+* separar ambientes dev, test y prod;
+* agregar dashboards en Power BI;
+* agregar una fuente de trafico web para calcular conversion real;
+* ampliar pruebas de integracion;
+* automatizar despliegue de infraestructura desde CI/CD.

@@ -1,0 +1,25 @@
+RetailMax - Pipeline run history summary
+============================================================
+execution_time: 2026-06-25 13:52:25
+total_runs_recorded: 5
+
+Runs by status:
+------------------------------------------------------------
+success: 5
+
+Last run:
+------------------------------------------------------------
+run_id: 1914f301-b617-4d6b-90dd-517cbbd8c26f
+pipeline_status: success
+execution_mode: batch
+orchestrator: airflow
+started_at: 2026-06-25 13:49:54
+finished_at: 2026-06-25 13:52:25
+duration_seconds: 151.29
+tables_processed: 7
+records_processed: 1855950
+
+Output files:
+------------------------------------------------------------
+parquet: /opt/airflow/project/data/control/pipeline_run_history.parquet
+csv: /opt/airflow/project/docs/evidence/pipeline_run_history.csv

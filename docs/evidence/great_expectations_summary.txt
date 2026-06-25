@@ -1,0 +1,14 @@
+RetailMax - Great Expectations style summary
+==================================================
+execution_time: 2026-06-25 13:51:55
+great_expectations_version: 1.18.1
+total_expectations: 14
+successful_expectations: 14
+failed_expectations: 0
+
+Results by table:
+--------------------------------------------------
+fact_ventas: 5/5 successful
+fact_inventario: 3/3 successful
+fact_devoluciones: 3/3 successful
+dim_clientes: 3/3 successful

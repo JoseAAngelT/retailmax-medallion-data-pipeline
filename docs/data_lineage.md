@@ -59,7 +59,7 @@ La evidencia se encuentra en:
 docs/evidence/partitioned_outputs_summary.txt
 ```
 
-Esta salida particionada se genera como evidencia adicional y no modifica el pipeline principal.
+Esta salida particionada se genera como parte del flujo orquestado del pipeline y sirve como evidencia de optimización de consumo analítico por periodo.
 
 ## Nota
 
