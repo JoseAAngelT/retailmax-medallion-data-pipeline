@@ -10,6 +10,7 @@ PROJECT_ROOT = Path("/opt/airflow/project")
 sys.path.append(str(PROJECT_ROOT))
 
 from src.bronze_ingestion import ingest_postgres_to_bronze  # noqa: E402
+from src.error_handling import generate_pipeline_error_table  # noqa: E402
 from src.generate_data import generate_bronze_data  # noqa: E402
 from src.gold_transform import run_gold_transformations  # noqa: E402
 from src.load_to_postgres import load_bronze_to_postgres  # noqa: E402
@@ -35,6 +36,7 @@ def _load_project_config() -> dict:
         config["paths"][layer] = str(PROJECT_ROOT / config["paths"][layer])
 
     config["paths"]["bronze_ingested"] = str(PROJECT_ROOT / "data/bronze_ingested")
+    config["paths"]["errors"] = str(PROJECT_ROOT / "data/errors")
     config["paths"]["evidence"] = str(PROJECT_ROOT / "docs/evidence")
 
     ensure_directories(config)
@@ -75,6 +77,12 @@ def run_quality_layer() -> None:
     """Ejecuta las validaciones de calidad."""
     config = _load_project_config()
     run_quality_checks(config)
+
+
+def run_error_handling_layer() -> None:
+    """Genera la tabla de errores del pipeline."""
+    config = _load_project_config()
+    generate_pipeline_error_table(config)
 
 
 with DAG(
@@ -122,6 +130,11 @@ with DAG(
         python_callable=run_quality_layer,
     )
 
+    error_handling = PythonOperator(
+        task_id="generate_pipeline_error_table",
+        python_callable=run_error_handling_layer,
+    )
+
     end = EmptyOperator(task_id="end")
 
     (
@@ -132,5 +145,6 @@ with DAG(
         >> silver
         >> gold
         >> quality_checks
+        >> error_handling
         >> end
     )

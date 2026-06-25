@@ -1,5 +1,2 @@
-error_id,execution_time,layer,table_name,record_id,error_type,description,expected_handling
-1,2026-06-21 10:01:52,Silver,TRANS_VENTAS,sample-1001,INVALID_CUSTOMER,id_miembro no existe en CRM_MIEMBROS.,Asignar cliente anónimo o registrar rechazo.
-2,2026-06-21 10:01:52,Silver,TRANS_VENTAS,sample-1002,DUPLICATED_TRANSACTION,Transacción duplicada exacta.,Eliminar duplicados o registrar en tabla de errores.
-3,2026-06-21 10:01:52,Bronze,TRANS_VENTAS,sample-1003,OUT_OF_RANGE_DATE,Fecha fuera del periodo esperado.,Detectar en validaciones y revisar la fuente.
-4,2026-06-21 10:01:52,Gold,fact_ventas,sample-1004,NEGATIVE_NET_SALE,Venta neta menor a cero.,Bloquear publicación de Gold hasta corregir la regla.
+error_timestamp,table_name,error_type,error_description,severity,records_affected
+2026-06-25 01:37:25,pipeline,NO_ERRORS_DETECTED,No se detectaron errores críticos en las validaciones.,info,0
