@@ -24,6 +24,7 @@ from src.pipeline_state import (  # noqa: E402
 )
 from src.quality_checks import run_quality_checks  # noqa: E402
 from src.silver_transform import run_silver_transformations  # noqa: E402
+from src.upload_to_azure import upload_outputs_to_azure  # noqa: E402
 from src.utils import ensure_directories, load_config  # noqa: E402
 
 default_args = {
@@ -131,6 +132,12 @@ def run_notification_layer() -> None:
     generate_pipeline_notification(config)
 
 
+def run_azure_upload_layer() -> None:
+    """Sube salidas Gold y evidencias a Azure Blob Storage."""
+    config = _load_project_config()
+    upload_outputs_to_azure(config)
+
+
 with DAG(
     dag_id="retailmax_medallion_pipeline",
     description=(
@@ -211,6 +218,11 @@ with DAG(
         python_callable=run_pipeline_end_layer,
     )
 
+    azure_upload = PythonOperator(
+        task_id="upload_outputs_to_azure",
+        python_callable=run_azure_upload_layer,
+    )
+
     end = EmptyOperator(task_id="end")
 
     (
@@ -227,6 +239,7 @@ with DAG(
         >> error_handling
         >> execution_report
         >> notification
+        >> azure_upload
         >> pipeline_end
         >> end
     )
