@@ -10,6 +10,7 @@ PROJECT_ROOT = Path("/opt/airflow/project")
 sys.path.append(str(PROJECT_ROOT))
 
 from src.bronze_ingestion import ingest_postgres_to_bronze  # noqa: E402
+from src.create_partitioned_outputs import create_partitioned_gold_outputs  # noqa: E402
 from src.error_handling import generate_pipeline_error_table  # noqa: E402
 from src.generate_data import generate_bronze_data  # noqa: E402
 from src.gold_transform import run_gold_transformations  # noqa: E402
@@ -36,6 +37,7 @@ def _load_project_config() -> dict:
         config["paths"][layer] = str(PROJECT_ROOT / config["paths"][layer])
 
     config["paths"]["bronze_ingested"] = str(PROJECT_ROOT / "data/bronze_ingested")
+    config["paths"]["gold_partitioned"] = str(PROJECT_ROOT / "data/gold_partitioned")
     config["paths"]["errors"] = str(PROJECT_ROOT / "data/errors")
     config["paths"]["evidence"] = str(PROJECT_ROOT / "docs/evidence")
 
@@ -71,6 +73,12 @@ def run_gold_layer() -> None:
     """Ejecuta las transformaciones hacia Gold."""
     config = _load_project_config()
     run_gold_transformations(config)
+
+
+def run_partitioned_gold_layer() -> None:
+    """Genera salidas Gold particionadas."""
+    config = _load_project_config()
+    create_partitioned_gold_outputs(config)
 
 
 def run_quality_layer() -> None:
@@ -125,6 +133,11 @@ with DAG(
         python_callable=run_gold_layer,
     )
 
+    partitioned_gold = PythonOperator(
+        task_id="create_partitioned_gold_outputs",
+        python_callable=run_partitioned_gold_layer,
+    )
+
     quality_checks = PythonOperator(
         task_id="run_quality_checks",
         python_callable=run_quality_layer,
@@ -144,6 +157,7 @@ with DAG(
         >> bronze_ingestion
         >> silver
         >> gold
+        >> partitioned_gold
         >> quality_checks
         >> error_handling
         >> end
