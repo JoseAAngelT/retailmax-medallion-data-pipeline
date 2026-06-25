@@ -1,0 +1,200 @@
+RetailMax - Pipeline execution report
+============================================================
+execution_time: 2026-06-25 02:50:08
+pipeline_status: completed
+
+Resumen de componentes ejecutados:
+------------------------------------------------------------
+- Bronze data generation
+- Bronze load to PostgreSQL
+- PostgreSQL to Bronze Parquet ingestion with audit metadata
+- Silver transformations
+- Gold transformations
+- Partitioned Gold outputs
+- Custom quality checks
+- Great Expectations style checks
+- Pipeline error table generation
+
+PostgreSQL load evidence:
+------------------------------------------------------------
+RetailMax - Evidencia de carga PostgreSQL
+==================================================
+execution_time: 2026-06-24 16:55:23
+database: retailmax_source
+load_mode: replace
+
+Resultados SELECT COUNT(*) por tabla:
+--------------------------------------------------
+mstr_proveedores: 800 (source: MSTR_PROVEEDORES)
+mstr_articulos: 5,000 (source: MSTR_ARTICULOS)
+mstr_tiendas: 150 (source: MSTR_TIENDAS)
+crm_miembros: 50,000 (source: CRM_MIEMBROS)
+trans_ventas: 1,000,000 (source: TRANS_VENTAS)
+inv_stock_diario: 750,000 (source: INV_STOCK_DIARIO)
+post_devoluciones: 50,000 (source: POST_DEVOLUCIONES)
+
+Bronze ingestion evidence:
+------------------------------------------------------------
+RetailMax - Bronze ingestion log
+==================================================
+batch_id: 19a23d41-f7e4-4476-9f20-45406832655f
+source_system: postgresql_local
+ingestion_timestamp: 2026-06-25 02:49:19
+output_format: parquet
+partition_columns: year, month, day
+
+Tables processed:
+--------------------------------------------------
+table: mstr_proveedores
+records_processed: 800
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_proveedores/year=2026/month=06/day=25/mstr_proveedores_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+file_size_mb: 0.02
+duration_seconds: 0.08
+
+table: mstr_articulos
+records_processed: 5000
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_articulos/year=2026/month=06/day=25/mstr_articulos_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+file_size_mb: 0.21
+duration_seconds: 0.12
+
+table: mstr_tiendas
+records_processed: 150
+output_file: /opt/airflow/project/data/bronze_ingested/mstr_tiendas/year=2026/month=06/day=25/mstr_tiendas_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+file_size_mb: 0.01
+duration_seconds: 0.03
+
+table: crm_miembros
+records_processed: 50000
+output_file: /opt/airflow/project/data/bronze_ingested/crm_miembros/year=2026/month=06/day=25/crm_miembros_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+file_size_mb: 0.53
+duration_seconds: 0.78
+
+table: trans_ventas
+records_processed: 1000000
+output_file: /opt/airflow/project/data/bronze_ingested/trans_ventas/year=2026/month=06/day=25/trans_ventas_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+file_size_mb: 22.21
+duration_seconds: 13.12
+
+table: inv_stock_diario
+records_processed: 750000
+output_file: /opt/airflow/project/data/bronze_ingested/inv_stock_diario/year=2026/month=06/day=25/inv_stock_diario_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+file_size_mb: 9.52
+duration_seconds: 6.76
+
+table: post_devoluciones
+records_processed: 50000
+output_file: /opt/airflow/project/data/bronze_ingested/post_devoluciones/year=2026/month=06/day=25/post_devoluciones_19a23d41-f7e4-4476-9f20-45406832655f.parquet
+file_size_mb: 1.19
+duration_seconds: 0.6
+
+Summary
+--------------------------------------------------
+total_tables: 7
+total_records_processed: 1855950
+total_duration_seconds: 21.49
+
+Partitioned Gold output evidence:
+------------------------------------------------------------
+RetailMax - Evidencia de salida Gold particionada
+==================================================
+execution_time: 2026-06-25 02:49:55
+
+source_table: /opt/airflow/project/data/gold/kpi_ventas_diarias.parquet
+partitioned_table: /opt/airflow/project/data/gold_partitioned/kpi_ventas_diarias
+partition_columns: year, month
+records_processed: 34110
+parquet_files_generated: 104
+
+Descripcion:
+La salida particionada se genera como parte del pipeline para optimizar el consumo analitico por periodo.
+
+Custom quality checks evidence:
+------------------------------------------------------------
+RetailMax Medallion Data Pipeline - Resumen de calidad
+=================================================================
+Total de validaciones: 47
+Validaciones exitosas: 47
+Validaciones fallidas: 0
+
+Detalle de validaciones:
+-----------------------------------------------------------------
+[PASS] Existe archivo Bronze - MSTR_PROVEEDORES - data\bronze\MSTR_PROVEEDORES.csv
+[PASS] Volumen mínimo Bronze - MSTR_PROVEEDORES - registros=800, mínimo=800
+[PASS] Existe archivo Bronze - MSTR_ARTICULOS - data\bronze\MSTR_ARTICULOS.csv
+[PASS] Volumen mínimo Bronze - MSTR_ARTICULOS - registros=5,000, mínimo=5,000
+[PASS] Existe archivo Bronze - MSTR_TIENDAS - data\bronze\MSTR_TIENDAS.csv
+[PASS] Volumen mínimo Bronze - MSTR_TIENDAS - registros=150, mínimo=150
+[PASS] Existe archivo Bronze - CRM_MIEMBROS - data\bronze\CRM_MIEMBROS.csv
+[PASS] Volumen mínimo Bronze - CRM_MIEMBROS - registros=50,000, mínimo=50,000
+[PASS] Existe archivo Bronze - TRANS_VENTAS - data\bronze\TRANS_VENTAS.csv
+[PASS] Volumen mínimo Bronze - TRANS_VENTAS - registros=1,000,000, mínimo=1,000,000
+[PASS] Existe archivo Bronze - INV_STOCK_DIARIO - data\bronze\INV_STOCK_DIARIO.csv
+[PASS] Volumen mínimo Bronze - INV_STOCK_DIARIO - registros=750,000, mínimo=750,000
+[PASS] Existe archivo Bronze - POST_DEVOLUCIONES - data\bronze\POST_DEVOLUCIONES.csv
+[PASS] Volumen mínimo Bronze - POST_DEVOLUCIONES - registros=50,000, mínimo=50,000
+[PASS] Existe archivo Silver - MSTR_PROVEEDORES - data\silver\MSTR_PROVEEDORES.parquet
+[PASS] Existe archivo Silver - MSTR_ARTICULOS - data\silver\MSTR_ARTICULOS.parquet
+[PASS] Existe archivo Silver - MSTR_TIENDAS - data\silver\MSTR_TIENDAS.parquet
+[PASS] Existe archivo Silver - CRM_MIEMBROS - data\silver\CRM_MIEMBROS.parquet
+[PASS] Existe archivo Silver - TRANS_VENTAS - data\silver\TRANS_VENTAS.parquet
+[PASS] Existe archivo Silver - INV_STOCK_DIARIO - data\silver\INV_STOCK_DIARIO.parquet
+[PASS] Existe archivo Silver - POST_DEVOLUCIONES - data\silver\POST_DEVOLUCIONES.parquet
+[PASS] Existe archivo Gold - dim_productos - data\gold\dim_productos.parquet
+[PASS] Existe archivo Gold - dim_tiendas - data\gold\dim_tiendas.parquet
+[PASS] Existe archivo Gold - dim_clientes - data\gold\dim_clientes.parquet
+[PASS] Existe archivo Gold - fact_ventas - data\gold\fact_ventas.parquet
+[PASS] Existe archivo Gold - fact_inventario - data\gold\fact_inventario.parquet
+[PASS] Existe archivo Gold - fact_devoluciones - data\gold\fact_devoluciones.parquet
+[PASS] Existe archivo Gold - fact_rfm_clientes - data\gold\fact_rfm_clientes.parquet
+[PASS] Existe archivo Gold - kpi_ventas_diarias - data\gold\kpi_ventas_diarias.parquet
+[PASS] Existe archivo Gold - kpi_top_articulos_categoria - data\gold\kpi_top_articulos_categoria.parquet
+[PASS] Conteo Gold - dim_productos - registros=5,000, esperado=5,000
+[PASS] Conteo Gold - dim_tiendas - registros=150, esperado=150
+[PASS] Conteo Gold - dim_clientes - registros=50,001, esperado=50,001
+[PASS] Conteo Gold - fact_ventas - registros=1,000,000, esperado=1,000,000
+[PASS] Conteo Gold - fact_inventario - registros=750,000, esperado=750,000
+[PASS] Conteo Gold - fact_devoluciones - registros=50,000, esperado=50,000
+[PASS] Integridad referencial - fact_ventas.id_miembro - Todos los clientes de fact_ventas existen en dim_clientes.
+[PASS] Integridad referencial - fact_ventas.art_id - Todos los productos de fact_ventas existen en dim_productos.
+[PASS] Integridad referencial - fact_ventas.id_tienda - Todas las tiendas de fact_ventas existen en dim_tiendas.
+[PASS] Integridad referencial - fact_inventario.art_id - Todos los productos de fact_inventario existen en dim_productos.
+[PASS] Integridad referencial - fact_devoluciones.id_trans_origen - Todas las devoluciones referencian una venta existente.
+[PASS] Existe cliente anónimo - dim_clientes contiene el registro id_miembro=0.
+[PASS] Venta neta no negativa - Todos los valores de vr_venta_neto son mayores o iguales a cero.
+[PASS] Cobertura de inventario disponible - Todos los registros de inventario tienen cobertura_dias.
+[PASS] Alerta de quiebre requiere consumo positivo - Todos los registros con alerta_quiebre tienen consumo 14 días > 0.
+[PASS] Tasa de devolución no negativa - Todos los valores de tasa_devolucion_articulo son >= 0.
+[PASS] Scores RFM entre 1 y 5 - r_score, f_score y m_score están dentro del rango esperado.
+
+Great Expectations evidence:
+------------------------------------------------------------
+RetailMax - Great Expectations style summary
+==================================================
+execution_time: 2026-06-25 02:50:02
+great_expectations_version: 1.18.1
+total_expectations: 14
+successful_expectations: 14
+failed_expectations: 0
+
+Results by table:
+--------------------------------------------------
+fact_ventas: 5/5 successful
+fact_inventario: 3/3 successful
+fact_devoluciones: 3/3 successful
+dim_clientes: 3/3 successful
+
+Pipeline errors evidence:
+------------------------------------------------------------
+RetailMax - Pipeline errors summary
+==================================================
+execution_time: 2026-06-25 02:50:05
+total_error_records: 1
+
+Errors by severity:
+--------------------------------------------------
+info: 1
+
+Output files:
+--------------------------------------------------
+parquet: /opt/airflow/project/data/errors/pipeline_errors.parquet
+csv: /opt/airflow/project/docs/evidence/pipeline_errors.csv

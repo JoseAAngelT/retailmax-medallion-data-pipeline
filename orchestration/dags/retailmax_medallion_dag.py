@@ -12,6 +12,7 @@ sys.path.append(str(PROJECT_ROOT))
 from src.bronze_ingestion import ingest_postgres_to_bronze  # noqa: E402
 from src.create_partitioned_outputs import create_partitioned_gold_outputs  # noqa: E402
 from src.error_handling import generate_pipeline_error_table  # noqa: E402
+from src.execution_report import generate_execution_report  # noqa: E402
 from src.generate_data import generate_bronze_data  # noqa: E402
 from src.gold_transform import run_gold_transformations  # noqa: E402
 from src.great_expectations_checks import run_great_expectations_checks  # noqa: E402
@@ -100,6 +101,12 @@ def run_error_handling_layer() -> None:
     generate_pipeline_error_table(config)
 
 
+def run_execution_report_layer() -> None:
+    """Genera el reporte operativo consolidado del pipeline."""
+    config = _load_project_config()
+    generate_execution_report(config)
+
+
 with DAG(
     dag_id="retailmax_medallion_pipeline",
     description=(
@@ -160,6 +167,11 @@ with DAG(
         python_callable=run_error_handling_layer,
     )
 
+    execution_report = PythonOperator(
+        task_id="generate_execution_report",
+        python_callable=run_execution_report_layer,
+    )
+
     end = EmptyOperator(task_id="end")
 
     (
@@ -173,5 +185,6 @@ with DAG(
         >> quality_checks
         >> great_expectations_checks
         >> error_handling
+        >> execution_report
         >> end
     )
