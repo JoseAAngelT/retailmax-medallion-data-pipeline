@@ -1,2 +1,2 @@
 error_timestamp,table_name,error_type,error_description,severity,records_affected
-2026-06-25 03:05:23,pipeline,NO_ERRORS_DETECTED,No se detectaron errores críticos en las validaciones.,info,0
+2026-06-25 03:41:09,pipeline,NO_ERRORS_DETECTED,No se detectaron errores críticos en las validaciones.,info,0

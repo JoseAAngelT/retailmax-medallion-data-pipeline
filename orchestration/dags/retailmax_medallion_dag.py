@@ -18,6 +18,10 @@ from src.gold_transform import run_gold_transformations  # noqa: E402
 from src.great_expectations_checks import run_great_expectations_checks  # noqa: E402
 from src.load_to_postgres import load_bronze_to_postgres  # noqa: E402
 from src.notifications import generate_pipeline_notification  # noqa: E402
+from src.pipeline_state import (  # noqa: E402
+    register_pipeline_end,
+    register_pipeline_start,
+)
 from src.quality_checks import run_quality_checks  # noqa: E402
 from src.silver_transform import run_silver_transformations  # noqa: E402
 from src.utils import ensure_directories, load_config  # noqa: E402
@@ -42,10 +46,23 @@ def _load_project_config() -> dict:
     config["paths"]["bronze_ingested"] = str(PROJECT_ROOT / "data/bronze_ingested")
     config["paths"]["gold_partitioned"] = str(PROJECT_ROOT / "data/gold_partitioned")
     config["paths"]["errors"] = str(PROJECT_ROOT / "data/errors")
+    config["paths"]["control"] = str(PROJECT_ROOT / "data/control")
     config["paths"]["evidence"] = str(PROJECT_ROOT / "docs/evidence")
 
     ensure_directories(config)
     return config
+
+
+def run_pipeline_start_layer() -> None:
+    """Registra el inicio de la ejecucion del pipeline."""
+    config = _load_project_config()
+    register_pipeline_start(config)
+
+
+def run_pipeline_end_layer() -> None:
+    """Registra el cierre exitoso de la ejecucion del pipeline."""
+    config = _load_project_config()
+    register_pipeline_end(config, pipeline_status="success")
 
 
 def run_bronze_layer() -> None:
@@ -184,10 +201,21 @@ with DAG(
         python_callable=run_notification_layer,
     )
 
+    pipeline_start = PythonOperator(
+        task_id="register_pipeline_start",
+        python_callable=run_pipeline_start_layer,
+    )
+
+    pipeline_end = PythonOperator(
+        task_id="register_pipeline_end",
+        python_callable=run_pipeline_end_layer,
+    )
+
     end = EmptyOperator(task_id="end")
 
     (
         start
+        >> pipeline_start
         >> bronze
         >> postgres_load
         >> bronze_ingestion
@@ -199,5 +227,6 @@ with DAG(
         >> error_handling
         >> execution_report
         >> notification
+        >> pipeline_end
         >> end
     )

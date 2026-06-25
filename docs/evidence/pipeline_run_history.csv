@@ -1,0 +1,5 @@
+run_id,pipeline_status,execution_mode,orchestrator,started_at,finished_at,duration_seconds,tables_processed,records_processed,updated_at
+ef31b9ca-4037-4454-8dad-0171d362dc31,success,batch,airflow,2026-06-25 03:32:06,2026-06-25 03:34:21,135.8,7,1855950,2026-06-25 03:34:21
+82709358-1ba4-4108-ab08-220d56c8aecf,success,batch,airflow,2026-06-25 03:34:27,2026-06-25 03:36:42,135.76,7,1855950,2026-06-25 03:36:42
+fcc3ad1d-fe97-441d-b922-1b62a6fbcab8,success,batch,airflow,2026-06-25 03:36:48,2026-06-25 03:39:00,132.13,7,1855950,2026-06-25 03:39:00
+10f52c6e-6445-453e-a4ee-dc50e01c0af2,success,batch,airflow,2026-06-25 03:39:05,2026-06-25 03:41:18,133.5,7,1855950,2026-06-25 03:41:18
