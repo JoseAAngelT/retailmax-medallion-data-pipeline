@@ -1,10 +1,10 @@
 FROM apache/airflow:2.10.5
 
-USER airflow
-
 RUN pip install --no-cache-dir \
     faker \
     pandas \
     numpy \
     pyarrow \
-    pyyaml
+    pyyaml \
+    psycopg2-binary \
+    great-expectations==1.18.1

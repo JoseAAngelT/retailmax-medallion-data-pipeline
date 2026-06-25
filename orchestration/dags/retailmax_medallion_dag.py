@@ -14,6 +14,7 @@ from src.create_partitioned_outputs import create_partitioned_gold_outputs  # no
 from src.error_handling import generate_pipeline_error_table  # noqa: E402
 from src.generate_data import generate_bronze_data  # noqa: E402
 from src.gold_transform import run_gold_transformations  # noqa: E402
+from src.great_expectations_checks import run_great_expectations_checks  # noqa: E402
 from src.load_to_postgres import load_bronze_to_postgres  # noqa: E402
 from src.quality_checks import run_quality_checks  # noqa: E402
 from src.silver_transform import run_silver_transformations  # noqa: E402
@@ -87,6 +88,12 @@ def run_quality_layer() -> None:
     run_quality_checks(config)
 
 
+def run_great_expectations_layer() -> None:
+    """Ejecuta validaciones formales tipo Great Expectations."""
+    config = _load_project_config()
+    run_great_expectations_checks(config)
+
+
 def run_error_handling_layer() -> None:
     """Genera la tabla de errores del pipeline."""
     config = _load_project_config()
@@ -143,6 +150,11 @@ with DAG(
         python_callable=run_quality_layer,
     )
 
+    great_expectations_checks = PythonOperator(
+        task_id="run_great_expectations_checks",
+        python_callable=run_great_expectations_layer,
+    )
+
     error_handling = PythonOperator(
         task_id="generate_pipeline_error_table",
         python_callable=run_error_handling_layer,
@@ -159,6 +171,7 @@ with DAG(
         >> gold
         >> partitioned_gold
         >> quality_checks
+        >> great_expectations_checks
         >> error_handling
         >> end
     )
